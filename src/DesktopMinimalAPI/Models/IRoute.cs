@@ -6,4 +6,11 @@ using System.Threading.Tasks;
 
 namespace DesktopMinimalAPI.Models;
 
-public record BxiosRequest(string RequestId, Methods Method, string Path, string? Body = null);
+public interface IRoute
+{
+}
+
+public record StringRoute(string Path) : IRoute
+{
+    public static explicit operator StringRoute(string path) => new(path);
+}
