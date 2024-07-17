@@ -6,4 +6,4 @@ using System.Threading.Tasks;
 
 namespace DesktopMinimalAPI.Models;
 
-public record BxiosResponse(string RequestId, int Status, string Data);
+public record WmResponse(string RequestId, int Status, string Data);
