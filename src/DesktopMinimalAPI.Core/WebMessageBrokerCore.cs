@@ -3,7 +3,6 @@ using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace DesktopMinimalAPI;
 
@@ -11,9 +10,9 @@ public sealed partial class WebMessageBrokerCore
 {
     internal readonly Dictionary<IRoute, IRegisteredFunction> MessageHandlers = new();
 
-    internal readonly CoreWebView2 CoreWebView;
+    public readonly CoreWebView2 CoreWebView;
 
-    internal WebMessageBrokerCore(CoreWebView2 coreWebView)
+    public WebMessageBrokerCore(CoreWebView2 coreWebView)
     {
         CoreWebView = coreWebView;
         CoreWebView.WebMessageReceived += OnWebMessageReceived;
