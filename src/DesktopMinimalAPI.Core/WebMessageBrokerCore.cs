@@ -8,7 +8,7 @@ namespace DesktopMinimalAPI;
 
 public sealed partial class WebMessageBrokerCore
 {
-    internal readonly Dictionary<IRoute, IRegisteredFunction> MessageHandlers = new();
+    internal readonly Dictionary<IRoute, Func<WmRequest, WmResponse>> MessageHandlers = new();
 
     public readonly CoreWebView2 CoreWebView;
 
@@ -30,83 +30,42 @@ public sealed partial class WebMessageBrokerCore
             _ => null
         };
 
-        WmResponse response;
-        try
+        var response = handler?.Invoke(request);
+
+
+        CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+
+
+    }
+
+    public void MapGet(IRoute route, Func<WmRequest, WmResponse> handler)
+    {
+        MessageHandlers.Add(route, handler);
+    }
+
+    public void MapGet(string route, Func<WmRequest, WmResponse> handler) => MapGet((StringRoute)route, handler);
+    public void MapGet(string route, Action handler) => MapGet((StringRoute)route, handler.ToWebMessageCommunicationForm());
+
+}
+
+public static class HandlerPipeline
+{
+    public static Func<WmRequest, WmResponse> Transform(Action handler) =>
+        (request) =>
         {
-            var result = handler?.Invoke(request!.Body ?? string.Empty);
-            response = new WmResponse(request!.RequestId, 200, result ?? string.Empty);
-        }
-        catch (Exception)
-        {
-            response = new WmResponse(request!.RequestId, 500, string.Empty);
-        }
-
-        //Application.Current.Dispatcher.Invoke(() => CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })));
-
-
-    }
+            try
+            {
+                handler();
+                return new WmResponse(request.RequestId, 200, string.Empty);
+            }
+            catch (Exception ex)
+            {
+                return new WmResponse(request.RequestId, 500, JsonSerializer.Serialize(ex));
+            }
+        };
 }
 
-
-public interface IRegisteredFunction
+public static class ActionAndFuncExtensions
 {
-    public string? Invoke(string body);
-}
-
-public class ActionRegisteredFunction : IRegisteredFunction
-{
-    private readonly Action _action;
-
-    public ActionRegisteredFunction(Action action)
-    {
-        _action = action;
-    }
-
-    public string? Invoke(string body)
-    {
-        _action();
-        return null;
-    }
-}
-
-public class ActionParamRegisteredFunction : IRegisteredFunction
-{
-    private readonly Action<string> _action;
-
-    public ActionParamRegisteredFunction(Action<string> action)
-    {
-        _action = action;
-    }
-
-    public string? Invoke(string body)
-    {
-        _action(body);
-        return null;
-    }
-}
-
-public class FuncRegisteredFunction : IRegisteredFunction
-{
-    private readonly Func<string> _func;
-
-    public FuncRegisteredFunction(Func<string> func)
-    {
-        _func = func;
-    }
-
-    public string? Invoke(string body) => _func();
-
-}
-
-public class FuncParamRegisteredFunction : IRegisteredFunction
-{
-    private readonly Func<string, string> _func;
-
-    public FuncParamRegisteredFunction(Func<string, string> func)
-    {
-        _func = func;
-    }
-
-    public string? Invoke(string body) => _func(body);
-
+    public static Func<WmRequest, WmResponse> ToWebMessageCommunicationForm(this Action action) => HandlerPipeline.Transform(action);
 }
