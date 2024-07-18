@@ -41,10 +41,14 @@ public sealed partial class WebMessageBrokerCore
     public void MapGet(IRoute route, Func<WmRequest, WmResponse> handler)
     {
         MessageHandlers.Add(route, handler);
+
+        var apply = (string r, Func<WmRequest, WmResponse> h) => MapGet((StringRoute)r, h);
+           
     }
 
     public void MapGet(string route, Func<WmRequest, WmResponse> handler) => MapGet((StringRoute)route, handler);
     public void MapGet(string route, Action handler) => MapGet((StringRoute)route, handler.ToWebMessageCommunicationForm());
+    public void MapGet<T>(string route, Func<T> handler) => MapGet((StringRoute)route, handler.ToWebMessageCommunicationForm());
 
 }
 
@@ -63,9 +67,39 @@ public static class HandlerPipeline
                 return new WmResponse(request.RequestId, 500, JsonSerializer.Serialize(ex));
             }
         };
+
+    public static Func<WmRequest, WmResponse> Transform<T>(Action<T> handler) =>
+       (request) =>
+       {
+           try
+           {
+               var param = JsonSerializer.Deserialize<T>(request.Body);
+               handler(param);
+               return new WmResponse(request.RequestId, 200, string.Empty);
+           }
+           catch (Exception ex)
+           {
+               return new WmResponse(request.RequestId, 500, JsonSerializer.Serialize(ex));
+           }
+       };
+
+    public static Func<WmRequest, WmResponse> Transform<T>(Func<T> handler) =>
+      (request) =>
+      {
+          try
+          {
+              var result = handler();
+              return new WmResponse(request.RequestId, 200, JsonSerializer.Serialize(result));
+          }
+          catch (Exception ex)
+          {
+              return new WmResponse(request.RequestId, 500, JsonSerializer.Serialize(ex));
+          }
+      };
 }
 
 public static class ActionAndFuncExtensions
 {
     public static Func<WmRequest, WmResponse> ToWebMessageCommunicationForm(this Action action) => HandlerPipeline.Transform(action);
+    public static Func<WmRequest, WmResponse> ToWebMessageCommunicationForm<T>(this Func<T> func) => HandlerPipeline.Transform(func);
 }
