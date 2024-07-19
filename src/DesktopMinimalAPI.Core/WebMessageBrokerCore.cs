@@ -13,6 +13,8 @@ public sealed partial class WebMessageBrokerCore
     internal readonly Dictionary<IRoute, Func<WmRequest, WmResponse>> MessageHandlers = new();
     internal readonly Dictionary<IRoute, Func<WmRequest, Task<WmResponse>>> AsyncMessageHandlers = new();
 
+    internal readonly JsonSerializerOptions _options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
     public readonly CoreWebView2 CoreWebView;
     private readonly SynchronizationContext? _context;
 
@@ -26,7 +28,7 @@ public sealed partial class WebMessageBrokerCore
 
     internal void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
     {
-        var request = JsonSerializer.Deserialize<WmRequest>(e.WebMessageAsJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        var request = JsonSerializer.Deserialize<WmRequest>(e.WebMessageAsJson, _options);
         if (request is null) return;
 
         var handler = request.Method switch
@@ -49,7 +51,7 @@ public sealed partial class WebMessageBrokerCore
             {
                 _context.Post(_ =>
                 {
-                    CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+                    CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, _options));
                 }, null);
 
             }));
@@ -60,7 +62,7 @@ public sealed partial class WebMessageBrokerCore
         var response = handler?.Invoke(request);
 
 
-        CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+        CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(response, _options));
 
 
     }
@@ -78,7 +80,7 @@ public sealed partial class WebMessageBrokerCore
     public void MapGet(string route, Func<WmRequest, WmResponse> handler) => MapGet((StringRoute)route, handler);
     public void MapGet(string route, Action handler) => MapGet((StringRoute)route, HandlerPipeline.Transform( handler));
     public void MapGet<T>(string route, Func<T> handler) => MapGet((StringRoute)route, HandlerPipeline.Transform(handler));
-    public void MapGet<T>(string route, Func<Task<T>> handler) => MapGet((StringRoute)route, HandlerPipeline.Transform(handler));
+    public void MapGet<T>(string route, Func<Task<T>> handler) => MapGet((StringRoute)route, HandlerPipeline.Transform(handler, _options));
 
 }
 
@@ -127,17 +129,17 @@ public static class HandlerPipeline
           }
       };
 
-    public static Func<WmRequest, Task<WmResponse>> Transform<T>(Func<Task<T>> handler) =>
+    public static Func<WmRequest, Task<WmResponse>> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions options) =>
       (request) =>
       {
           try
           {
               var result = handler();
-              return result.ContinueWith(t => new WmResponse(request.RequestId, 200, JsonSerializer.Serialize(t.Result)));
+              return result.ContinueWith(t => new WmResponse(request.RequestId, 200, JsonSerializer.Serialize(t.Result, options)));
           }
           catch (Exception ex)
           {
-              return Task.FromResult(new WmResponse(request.RequestId, 500, JsonSerializer.Serialize(ex)));
+              return Task.FromResult(new WmResponse(request.RequestId, 500, JsonSerializer.Serialize(ex, options)));
           }
       };
 }
