@@ -53,6 +53,8 @@ public sealed partial class WebMessageBrokerCore
                 }, null);
 
             }));
+
+            return;
         }
 
         var response = handler?.Invoke(request);
