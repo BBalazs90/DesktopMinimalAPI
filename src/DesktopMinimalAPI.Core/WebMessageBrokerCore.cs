@@ -5,18 +5,20 @@ using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+[assembly: InternalsVisibleTo("DesktopMinimalAPI.Core.Tests")]
 namespace DesktopMinimalAPI;
 
 public sealed partial class WebMessageBrokerCore
 {
-    public readonly CoreWebView2 CoreWebView;
+    public readonly ICoreWebView2 CoreWebView;
     private readonly SynchronizationContext? _context;
 
-    public WebMessageBrokerCore(CoreWebView2 coreWebView)
+    public WebMessageBrokerCore(ICoreWebView2 coreWebView)
     {
         CoreWebView = coreWebView;
         CoreWebView.WebMessageReceived += OnWebMessageReceived;

@@ -1,4 +1,5 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
+using DesktopMinimalAPI.Core.Models;
 using Microsoft.Web.WebView2.Wpf;
 using System;
 using System.Collections.Immutable;
@@ -21,7 +22,7 @@ public sealed class PreconfiguredDevServerBasedBuilder : HandlerBuilderBase
     {
         await _webView2.EnsureCoreWebView2Async();
         _webView2.CoreWebView2.Navigate(_devServerUri.ToString());
-        return new WebMessageBrokerCore(_webView2.CoreWebView2)
+        return new WebMessageBrokerCore((CoreWebView2Wrapper)_webView2.CoreWebView2)
         {
             GetMessageHandlers = GetMessageHandlers.ToImmutableDictionary(),
             AsyncGetMessageHandlers = AsyncGetMessageHandlers.ToImmutableDictionary()
