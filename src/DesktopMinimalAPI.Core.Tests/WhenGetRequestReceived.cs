@@ -1,41 +1,27 @@
-﻿using DesktopMinimalAPI.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DesktopMinimalAPI.Core.Configuration;
+using DesktopMinimalAPI.Core.Tests.Helpers;
+using DesktopMinimalAPI.Models;
+using DesktopMinimalAPI.Extensions;
+using System.Text.Json;
 
 namespace DesktopMinimalAPI.Core.Tests;
 
 public class WhenGetRequestReceived
 {
-    [Fact]
-    public void ShouldReturnOkResponse()
+    [StaFact]
+    public async Task ShouldReturnOkResponse()
     {
         // Arrange
-        var request = new WmRequest("asd", new Methods.Get(), "/test");
-
-        //var handler = new Func<WmRequest, WmResponse>(req =>
-        //{
-        //    return new WmResponse
-        //    {
-        //        StatusCode = 200,
-        //        Body = "Hello, World!"
-        //    };
-        //});
-
-        //var builder = new Builder()
-        //    .MapGet(new StringRoute("test"), handler);
-
-        //var broker = builder.BuildAsync().Result;
+        var handler = () => true;
+        var builder = new WebMessageBrokerBuilderForTest()
+            .MapGet("/test", handler) as WebMessageBrokerBuilderForTest;
+        var broker = await builder!.BuildAsync();
 
         //// Act
-        //broker.OnWebMessageReceived(null, new CoreWebView2WebMessageReceivedEventArgs
-        //{
-        //    WebMessageAsJson = JsonSerializer.Serialize(request, Serialization.DefaultCamelCase)
-        //});
+        builder.MockCoreWebView2.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequest("asd", (Methods)"GET", "/test"), Serialization.DefaultCamelCase));
 
         //// Assert
-        //broker.CoreWebView.PostWebMessageAsString(Arg.Any<string>()).Received().PostWebMessageAsString(Arg.Any<string>());
+        Assert.True(!string.IsNullOrWhiteSpace(builder.MockCoreWebView2.LastPostedWebMessageAsString));
     }
 }
+

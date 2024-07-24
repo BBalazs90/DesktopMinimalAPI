@@ -28,9 +28,9 @@ public sealed partial class WebMessageBrokerCore
     public required ImmutableDictionary<IRoute, Func<WmRequest, WmResponse>> GetMessageHandlers { get; init; }
     public required ImmutableDictionary<IRoute, Func<WmRequest, Task<WmResponse>>> AsyncGetMessageHandlers { get; init; }
 
-    internal void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
+    internal void OnWebMessageReceived(object? sender, EventArgs e)
     {
-        var request = JsonSerializer.Deserialize<WmRequest>(e.WebMessageAsJson, Serialization.DefaultCamelCase);
+        var request = JsonSerializer.Deserialize<WmRequest>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
         if (request is null) return;
 
         var handler = request.Method switch
@@ -63,8 +63,16 @@ public sealed partial class WebMessageBrokerCore
 
         var response = handler?.Invoke(request);
 
-
         CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
     }
+
+    private static string GetWebMessageAsString(EventArgs e) =>
+        // This required for testing purposes, since CoreWebView2WebMessageReceivedEventArgs has no public ctr, thus not possible to simulate
+        // the even fire. Therefore reflection magic is needed, but this overhead is eliminated in prod.
+#if DEBUG
+        e is CoreWebView2WebMessageReceivedEventArgs cwvArg ? cwvArg.WebMessageAsJson : (string)e.GetType().GetProperty("WebMessageAsJson").GetValue(e);
+#else
+        ((CoreWebView2WebMessageReceivedEventArgs)e).WebMessageAsJson;
+#endif
 }
 

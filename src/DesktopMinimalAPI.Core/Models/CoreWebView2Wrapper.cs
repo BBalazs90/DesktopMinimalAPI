@@ -14,14 +14,11 @@ public sealed class CoreWebView2Wrapper : ICoreWebView2
     public CoreWebView2Wrapper(CoreWebView2 coreWebView2)
     {
         _coreWebView2 = coreWebView2;
+        _coreWebView2.WebMessageReceived += (sender, e) => WebMessageReceived?.Invoke(sender, e);
     }
 
-    // Define a new event in your wrapper class
-    public event EventHandler<CoreWebView2WebMessageReceivedEventArgs> WebMessageReceived
-    {
-        add { _coreWebView2.WebMessageReceived += value;}
-        remove { _coreWebView2.WebMessageReceived -= value;}
-    }
+    public event EventHandler<EventArgs>? WebMessageReceived;
+    
 
     public void PostWebMessageAsString(string webMessageAsString) 
         => _coreWebView2.PostWebMessageAsString(webMessageAsString);

@@ -14,8 +14,8 @@ public abstract record Methods
         _ => throw new ArgumentException()
     };
 
-    internal sealed record Get : Methods;
-    internal sealed record Post : Methods;
+    internal sealed record Get : Methods { public override string ToString() => "GET";}
+    internal sealed record Post : Methods { public override string ToString() => "POST"; };
 }
 public class MethodsJsonConverter : JsonConverter<Methods>
 {
