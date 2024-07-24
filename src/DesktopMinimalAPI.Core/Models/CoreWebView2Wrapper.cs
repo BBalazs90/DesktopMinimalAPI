@@ -1,10 +1,6 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
 using Microsoft.Web.WebView2.Core;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DesktopMinimalAPI.Core.Models;
 public sealed class CoreWebView2Wrapper : ICoreWebView2
@@ -18,7 +14,6 @@ public sealed class CoreWebView2Wrapper : ICoreWebView2
     }
 
     public event EventHandler<EventArgs>? WebMessageReceived;
-    
 
     public void PostWebMessageAsString(string webMessageAsString) 
         => _coreWebView2.PostWebMessageAsString(webMessageAsString);
