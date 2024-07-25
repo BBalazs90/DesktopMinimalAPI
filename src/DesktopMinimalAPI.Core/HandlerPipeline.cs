@@ -1,6 +1,7 @@
 ﻿using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Models;
 using System;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -43,11 +44,11 @@ public static class HandlerPipeline
           try
           {
               var result = handler();
-              return new WmResponse(request.RequestId, 200, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
+              return new WmResponse(request.RequestId, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
           }
           catch (Exception ex)
           {
-              return new WmResponse(request.RequestId, 500, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase));
+              return new WmResponse(request.RequestId, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
           }
       };
 
@@ -57,11 +58,11 @@ public static class HandlerPipeline
           try
           {
               var result = handler();
-              return result.ContinueWith(t => new WmResponse(request.RequestId, 200, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)));
+              return result.ContinueWith(t => new WmResponse(request.RequestId, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)));
           }
           catch (Exception ex)
           {
-              return Task.FromResult(new WmResponse(request.RequestId, 500, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
+              return Task.FromResult(new WmResponse(request.RequestId, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
           }
       };
 }

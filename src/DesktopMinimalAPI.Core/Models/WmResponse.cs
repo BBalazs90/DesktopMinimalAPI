@@ -1,3 +1,6 @@
-﻿namespace DesktopMinimalAPI.Models;
+﻿using System;
+using System.Net;
 
-public record WmResponse(string RequestId, int Status, string Data);
+namespace DesktopMinimalAPI.Models;
+
+public record WmResponse(Guid RequestId, HttpStatusCode Status, string Data);
