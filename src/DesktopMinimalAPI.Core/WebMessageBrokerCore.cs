@@ -5,6 +5,8 @@ using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
@@ -30,33 +32,50 @@ public sealed partial class WebMessageBrokerCore
 
     internal void OnWebMessageReceived(object? sender, EventArgs e)
     {
-        var request = JsonSerializer.Deserialize<WmRequest>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
-        if (request is null) return;
+        StartRequestProcessingPipeline(e);
+    }
 
+    private void StartRequestProcessingPipeline(EventArgs e)
+    {
+        var (request, invalidRequestReponse) = TryGetRequest(e);
+        if (invalidRequestReponse is not null)
+        {
+            PostResponse(invalidRequestReponse);
+            return;
+        }
+
+        Debug.Assert(request is not null, "If the invalidRequestReponse is not null, the previous method must return a non-null request");
         var handler = request.Method switch
         {
-            Methods.Get => GetMessageHandlers.GetValueOrDefault((StringRoute)(request.Path)),
+            var method when method == Methods.Get => GetMessageHandlers.GetValueOrDefault((StringRoute)(request.Path)),
             _ => null
         };
 
         if (handler is null)
         {
+            var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
+            CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
+            return;
+        }
+
+        if (handler is null)
+        {
             var asyncHandler = request.Method switch
             {
-                Methods.Get => AsyncGetMessageHandlers.GetValueOrDefault((StringRoute)(request.Path)),
+                var method when method == Methods.Get => AsyncGetMessageHandlers.GetValueOrDefault((StringRoute)(request.Path)),
                 _ => null
             };
 
             Task.Run(async () => await asyncHandler?
                 .Invoke(request)
                 .ContinueWith(resp =>
-            {
-                _context.Post(_ =>
                 {
-                    CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, Serialization.DefaultCamelCase));
-                }, null);
+                    _context.Post(_ =>
+                    {
+                        CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, Serialization.DefaultCamelCase));
+                    }, null);
 
-            }));
+                }));
 
             return;
         }
@@ -64,15 +83,41 @@ public sealed partial class WebMessageBrokerCore
         var response = handler?.Invoke(request);
 
         CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
-    }
 
-    private static string GetWebMessageAsString(EventArgs e) =>
-        // This required for testing purposes, since CoreWebView2WebMessageReceivedEventArgs has no public ctr, thus not possible to simulate
-        // the even fire. Therefore reflection magic is needed, but this overhead is eliminated in prod.
+
+        static (WmRequest? retrievedRequest, WmResponse? invalidRequestReponse) TryGetRequest(EventArgs e)
+        {
+            try
+            {
+                var request = JsonSerializer.Deserialize<WmRequest>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
+                return request switch
+                {
+                    null => (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, "The request was not properly formated")),
+                    (var id, _, _, _) when id == Guid.Empty => (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, "The request must contain a valid GUID")),
+                    (var id, var method, _, _) when method is null || method == Methods.Invalid => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid request method type (GET | POST | PUT | DELETE")),
+                    (var id, _, var path, _) when string.IsNullOrWhiteSpace(path) => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid, non-empty path")),
+                    _ => (request, null)
+                };
+            }
+            catch (Exception ex)
+            {
+                return (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
+            }
+        }
+
+        static string GetWebMessageAsString(EventArgs e) =>
+            // This required for testing purposes, since CoreWebView2WebMessageReceivedEventArgs has no public ctr, thus not possible to simulate
+            // the even fire. Therefore reflection magic is needed, but this overhead is eliminated in prod.
 #if DEBUG
-        e is CoreWebView2WebMessageReceivedEventArgs cwvArg ? cwvArg.WebMessageAsJson : (string)e.GetType().GetProperty("WebMessageAsJson").GetValue(e);
+            e is CoreWebView2WebMessageReceivedEventArgs cwvArg
+            ? cwvArg.WebMessageAsJson
+            : (e.GetType().GetProperty("WebMessageAsJson")?.GetValue(e) as string ?? throw new ArgumentException("The provided type has no WebMessageAsJson property"));
 #else
         ((CoreWebView2WebMessageReceivedEventArgs)e).WebMessageAsJson;
 #endif
+
+        void PostResponse(WmResponse response) =>
+            CoreWebView.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
+    }
 }
 

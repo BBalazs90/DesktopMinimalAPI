@@ -5,30 +5,51 @@ using System.Text.Json.Serialization;
 namespace DesktopMinimalAPI.Models;
 
 [JsonConverter(typeof(MethodsJsonConverter))]
-public abstract record Methods
+public abstract class Methods
 {
+    public static readonly Get Get = new();
+    public static readonly Post Post = new();
+    public static readonly Invalid Invalid = new();
+
+
     public static explicit operator Methods(string method) => method.ToUpper() switch
     {
-        "GET" => new Get(),
-        "POST" => new Post(),
-        _ => throw new ArgumentException()
+        "GET" => Get,
+        "POST" => Post,
+        _ => Invalid
     };
 
-    internal sealed record Get : Methods { public override string ToString() => "GET";}
-    internal sealed record Post : Methods { public override string ToString() => "POST"; };
 }
+
+public sealed class Get : Methods
+{
+    internal Get() { }
+    public override string ToString() => "GET";
+}
+
+public sealed class Post : Methods
+{
+    internal Post() { }
+    public override string ToString() => "POST";
+};
+
+public sealed class Invalid : Methods
+{
+    internal Invalid() { }
+    public override string ToString() => "INVALID";
+};
+
 public class MethodsJsonConverter : JsonConverter<Methods>
 {
     public override Methods Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String)
         {
-            throw new JsonException();
+            return Methods.Invalid;
         }
 
-        string method = reader.GetString();
+        return (Methods)(reader.GetString() ?? string.Empty) ?? Methods.Invalid;
 
-        return (Methods)method;
     }
 
     public override void Write(Utf8JsonWriter writer, Methods value, JsonSerializerOptions options)
