@@ -15,7 +15,7 @@ public sealed class Builder : HandlerBuilderBase
         WebView2 = webView2;
     }
 
-    public override async Task<WebMessageBrokerCore> BuildAsync()
+    public override async Task<IWebMessageBroker> BuildAsync()
     {
         await WebView2.EnsureCoreWebView2Async();
         return new WebMessageBrokerCore((CoreWebView2Wrapper)WebView2.CoreWebView2)

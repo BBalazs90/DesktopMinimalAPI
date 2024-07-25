@@ -4,7 +4,6 @@ using DesktopMinimalAPI.Extensions;
 using System.Text.Json;
 using FluentAssertions;
 using System.Net;
-using DesktopMinimalAPI.Models;
 
 namespace DesktopMinimalAPI.Core.Tests;
 
@@ -110,5 +109,37 @@ public class WhenGetRequestReceived
         var response = _builder.MockCoreWebView2.ReadLastResponse();
         response.Status.Should().Be(HttpStatusCode.BadRequest);
         response.RequestId.Should().Be(Guid.Parse("00000001-0000-0001-0000-000000000001"));
+    }
+
+    [Theory]
+    [InlineData("This is not a valid request")]
+    [InlineData("{\"RequestId\":\"00000001-0000-0001-0000-000000000001\",\"Method\":\"GET\",\"Path\":\"/valid\",\"Body\":null}")]
+    [InlineData("{}")]
+    [InlineData("{\"notARequestProp\":2}")]
+    public async Task ShouldReturnBadRequestIfRequestIsNotValidRequest(string serializedRequest)
+    {
+        var broker = await _builder!.BuildAsync();
+
+        _builder.MockCoreWebView2.RaiseWebMessageReceived(serializedRequest);
+
+        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        response.Status.Should().Be(HttpStatusCode.BadRequest);
+        response.RequestId.Should().Be(Guid.Empty);
+    }
+
+    [Fact]
+    public async Task ShouldRespectUrlParams()
+    {
+        const string path = "/test?param1=1&param2=2";
+        var handler = (int param1, int param2) => param1 + param2;
+        _builder.MapGet(path, handler);
+        var broker = await _builder!.BuildAsync();
+
+        var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
+
+        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        response.Status.Should().Be(HttpStatusCode.OK);
+        response.RequestId.Should().Be(guid);
+        JsonSerializer.Deserialize<int>(response.Data, Serialization.DefaultCamelCase).Should().Be(3);
     }
 }

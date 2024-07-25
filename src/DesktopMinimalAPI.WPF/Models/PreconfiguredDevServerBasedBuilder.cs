@@ -18,7 +18,7 @@ public sealed class PreconfiguredDevServerBasedBuilder : HandlerBuilderBase
         _devServerUri = devServerUri;
     }
 
-    public override async Task<WebMessageBrokerCore> BuildAsync()
+    public override async Task<IWebMessageBroker> BuildAsync()
     {
         await _webView2.EnsureCoreWebView2Async();
         _webView2.CoreWebView2.Navigate(_devServerUri.ToString());
