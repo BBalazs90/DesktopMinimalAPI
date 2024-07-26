@@ -1,4 +1,5 @@
-﻿using DesktopMinimalAPI.Core.Abstractions;
+﻿using DesktopMinimalAPI.Core;
+using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Models;
@@ -47,9 +48,11 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
         }
 
         Debug.Assert(request is not null, "If the invalidRequestReponse is not null, the previous method must return a non-null request");
+        var route = RoutePipeline.GetRoot(request.Path);
+        var transformedRequest = RequestTransformerPipeline.Transform(request);
         var handler = request.Method switch
         {
-            var method when method == Methods.Get => GetMessageHandlers.GetValueOrDefault((StringRoute)(request.Path)),
+            var method when method == Method.Get => GetMessageHandlers.GetValueOrDefault(route),
             _ => null
         };
 
@@ -82,7 +85,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
         //    return;
         //}
 
-        var response = handler?.Invoke(new TransformedWmRequest(request.RequestId, ImmutableArray<RequestParameterInfo>.Empty));
+        var response = handler?.Invoke(transformedRequest);
 
         CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
 
@@ -96,7 +99,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
                 {
                     null => (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, "The request was not properly formated")),
                     (var id, _, _, _) when id == Guid.Empty => (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, "The request must contain a valid GUID")),
-                    (var id, var method, _, _) when method is null || method == Methods.Invalid => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid request method type (GET | POST | PUT | DELETE")),
+                    (var id, var method, _, _) when method is null || method == Method.Invalid => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid request method type (GET | POST | PUT | DELETE")),
                     (var id, _, var path, _) when string.IsNullOrWhiteSpace(path) => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid, non-empty path")),
                     _ => (request, null)
                 };

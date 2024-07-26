@@ -72,8 +72,9 @@ internal static class HandlerPipeline
       {
           try
           {
-              var type = handler.GetType();
-              var result = handler(default, default);
+              var p1 = TryGetParameter<Tin1>(request.ParameterInfos[0], options);
+              var p2 = TryGetParameter<Tin2>(request.ParameterInfos[1], options);
+              var result = handler(p1, p2);
               return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
           }
           catch (Exception ex)
@@ -95,5 +96,17 @@ internal static class HandlerPipeline
               return Task.FromResult(new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
           }
       };
+
+    private static T TryGetParameter<T>(RequestParameterIntermediate parameter, JsonSerializerOptions? options = null)
+    {
+        try
+        {
+            return typeof(T).IsAssignableTo(typeof(IConvertible)) ? (T)Convert.ChangeType(parameter.SerializedParameter, typeof(T)) : default;
+        }
+        catch (Exception ex)
+        {
+            return default;
+        }
+    }
 }
 

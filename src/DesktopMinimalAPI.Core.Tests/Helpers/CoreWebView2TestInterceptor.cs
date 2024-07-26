@@ -25,7 +25,7 @@ internal static class CoreWebView2TestInterceptorExtensions
     public static Guid SimulateGet(this CoreWebView2TestInterceptor webView, string path)
     {
         var guid = Guid.NewGuid();
-        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequest(guid, (Methods)"GET", path), Serialization.DefaultCamelCase));
+        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequest(guid, (Method)"GET", path), Serialization.DefaultCamelCase));
         return guid;
     }
 

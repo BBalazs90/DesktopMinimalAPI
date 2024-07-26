@@ -127,19 +127,30 @@ public class WhenGetRequestReceived
         response.RequestId.Should().Be(Guid.Empty);
     }
 
-    [Fact]
-    public async Task ShouldRespectUrlParams()
+    [Theory]
+    [ClassData(typeof(UrlParamsData))]
+    public async Task ShouldPassUrlParamsToHandler<T>(string route, Func<T,T,T> handler, T expectedResult)
     {
-        const string path = "/test?param1=1&param2=2";
-        var handler = (int param1, int param2) => param1 + param2;
-        _builder.MapGet(path, handler);
+        _builder.MapGet(route, handler);
         var broker = await _builder!.BuildAsync();
 
-        var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
+        var guid = _builder.MockCoreWebView2.SimulateGet(route);
 
         var response = _builder.MockCoreWebView2.ReadLastResponse();
         response.Status.Should().Be(HttpStatusCode.OK);
         response.RequestId.Should().Be(guid);
-        JsonSerializer.Deserialize<int>(response.Data, Serialization.DefaultCamelCase).Should().Be(3);
+        JsonSerializer.Deserialize<T>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
+}
+
+public class UrlParamsData : IEnumerable<object[]>
+{
+    public IEnumerator<object[]> GetEnumerator()
+    {
+        yield return new object[] { "/test?param1=1&param2=2", (int param1, int param2) => param1 + param2, 3 };
+        yield return new object[] { "/test?param1=1.2&param2=3.4", (double param1, double param2) => param1 + param2, 4.6 };
+        yield return new object[] { "/test?param1=asd&param2=bsd", (string param1, string param2) => param1 + param2, "asdbsd" };
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 }

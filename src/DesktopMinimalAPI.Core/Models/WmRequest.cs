@@ -2,4 +2,4 @@
 
 namespace DesktopMinimalAPI.Models;
 
-public record WmRequest(Guid RequestId, Methods Method, string Path, string? Body = null);
+public record WmRequest(Guid RequestId, Method Method, string Path, string? Body = null);

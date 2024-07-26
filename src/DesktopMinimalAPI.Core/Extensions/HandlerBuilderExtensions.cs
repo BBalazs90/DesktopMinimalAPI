@@ -4,7 +4,7 @@ using DesktopMinimalAPI.Models;
 using System;
 using System.Threading.Tasks;
 using static DesktopMinimalAPI.Core.HandlerPipeline;
-using static DesktopMinimalAPI.Core.PathPipeline;
+using static DesktopMinimalAPI.Core.RoutePipeline;
 
 namespace DesktopMinimalAPI.Extensions;
 

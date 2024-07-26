@@ -5,14 +5,14 @@ using System.Text.Json.Serialization;
 namespace DesktopMinimalAPI.Models;
 
 [JsonConverter(typeof(MethodsJsonConverter))]
-public abstract class Methods
+public abstract class Method
 {
     public static readonly Get Get = new();
     public static readonly Post Post = new();
     public static readonly Invalid Invalid = new();
 
 
-    public static explicit operator Methods(string method) => method.ToUpper() switch
+    public static explicit operator Method(string method) => method.ToUpper() switch
     {
         "GET" => Get,
         "POST" => Post,
@@ -21,38 +21,38 @@ public abstract class Methods
 
 }
 
-public sealed class Get : Methods
+public sealed class Get : Method
 {
     internal Get() { }
     public override string ToString() => "GET";
 }
 
-public sealed class Post : Methods
+public sealed class Post : Method
 {
     internal Post() { }
     public override string ToString() => "POST";
 };
 
-public sealed class Invalid : Methods
+public sealed class Invalid : Method
 {
     internal Invalid() { }
     public override string ToString() => "INVALID";
 };
 
-public class MethodsJsonConverter : JsonConverter<Methods>
+public class MethodsJsonConverter : JsonConverter<Method>
 {
-    public override Methods Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override Method Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String)
         {
-            return Methods.Invalid;
+            return Method.Invalid;
         }
 
-        return (Methods)(reader.GetString() ?? string.Empty) ?? Methods.Invalid;
+        return (Method)(reader.GetString() ?? string.Empty) ?? Method.Invalid;
 
     }
 
-    public override void Write(Utf8JsonWriter writer, Methods value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, Method value, JsonSerializerOptions options)
     {
         writer.WriteStringValue(value.ToString());
     }
