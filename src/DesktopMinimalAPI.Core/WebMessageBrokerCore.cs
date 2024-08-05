@@ -21,7 +21,10 @@ namespace DesktopMinimalAPI;
 internal sealed class WebMessageBrokerCore : IWebMessageBroker
 {
     public readonly ICoreWebView2 CoreWebView;
+#pragma warning disable S4487 // Unread "private" fields should be removed
+    // Will be used soon.
     private readonly SynchronizationContext? _context;
+#pragma warning restore S4487 // Unread "private" fields should be removed
 
     internal WebMessageBrokerCore(ICoreWebView2 coreWebView)
     {
@@ -33,10 +36,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
     internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, WmResponse>> GetMessageHandlers { get; init; }
     internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> AsyncGetMessageHandlers { get; init; }
 
-    internal void OnWebMessageReceived(object? sender, EventArgs e)
-    {
-        StartRequestProcessingPipeline(e);
-    }
+    internal void OnWebMessageReceived(object? sender, EventArgs e) => StartRequestProcessingPipeline(e);
 
     private void StartRequestProcessingPipeline(EventArgs e)
     {
@@ -85,13 +85,15 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
         //    return;
         //}
 
-        var response = handler?.Invoke(transformedRequest);
+        var response = handler.Invoke(transformedRequest);
 
         CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
 
 
         static (WmRequest? retrievedRequest, WmResponse? invalidRequestReponse) TryGetRequest(EventArgs e)
         {
+#pragma warning disable CA1031 // Do not catch general exception types
+            // This must catch all exception, because that must be returned to the caller.
             try
             {
                 var request = JsonSerializer.Deserialize<WmRequest>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
@@ -108,6 +110,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
             {
                 return (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
             }
+#pragma warning restore CA1031 // Do not catch general exception types
         }
 
         static string GetWebMessageAsString(EventArgs e) =>

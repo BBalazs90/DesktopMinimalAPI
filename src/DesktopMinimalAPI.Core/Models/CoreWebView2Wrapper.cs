@@ -18,5 +18,8 @@ public sealed class CoreWebView2Wrapper : ICoreWebView2
     public void PostWebMessageAsString(string webMessageAsString) 
         => _coreWebView2.PostWebMessageAsString(webMessageAsString);
 
-    public static explicit operator CoreWebView2Wrapper(CoreWebView2 coreWebView2) => new CoreWebView2Wrapper(coreWebView2);
+    public static CoreWebView2Wrapper ToCoreWebView2Wrapper(CoreWebView2 coreWebView2) => new(coreWebView2);
+
+    public static explicit operator CoreWebView2Wrapper(CoreWebView2 coreWebView2) => ToCoreWebView2Wrapper(coreWebView2);
+
 }

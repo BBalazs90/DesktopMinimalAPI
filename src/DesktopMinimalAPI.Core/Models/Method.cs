@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,13 +12,15 @@ public abstract class Method
     public static readonly Post Post = new();
     public static readonly Invalid Invalid = new();
 
-
-    public static explicit operator Method(string method) => method.ToUpper() switch
+    public static Method ToMethod(string method) => (method?.ToUpper(CultureInfo.CurrentCulture) 
+        ?? throw new ArgumentNullException(nameof(method))) switch
     {
         "GET" => Get,
         "POST" => Post,
         _ => Invalid
     };
+
+    public static explicit operator Method(string method) => ToMethod(method);
 
 }
 
@@ -52,8 +55,6 @@ public class MethodsJsonConverter : JsonConverter<Method>
 
     }
 
-    public override void Write(Utf8JsonWriter writer, Method value, JsonSerializerOptions options)
-    {
-        writer.WriteStringValue(value.ToString());
-    }
+    public override void Write(Utf8JsonWriter writer, Method value, JsonSerializerOptions options) => 
+        writer?.WriteStringValue(value?.ToString() ?? throw new ArgumentNullException(nameof(value)));
 }
