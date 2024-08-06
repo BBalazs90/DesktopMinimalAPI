@@ -10,35 +10,6 @@ namespace DesktopMinimalAPI.Core;
 
 internal static class HandlerPipeline
 {
-    //public static Func<WmRequest, WmResponse> Transform(Action handler) =>
-    //    (request) =>
-    //    {
-    //        try
-    //        {
-    //            handler();
-    //            return new WmResponse(request.RequestId, 200, string.Empty);
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            return new WmResponse(request.RequestId, 500, JsonSerializer.Serialize(ex));
-    //        }
-    //    };
-
-    //public static Func<WmRequest, WmResponse> Transform<T>(Action<T> handler) =>
-    //   (request) =>
-    //   {
-    //       try
-    //       {
-    //           var param = JsonSerializer.Deserialize<T>(request.Body);
-    //           handler(param);
-    //           return new WmResponse(request.RequestId, 200, string.Empty);
-    //       }
-    //       catch (Exception ex)
-    //       {
-    //           return new WmResponse(request.RequestId, 500, JsonSerializer.Serialize(ex));
-    //       }
-    //};
-
     internal static Func<TransformedWmRequest, WmResponse> Transform<T>(Func<T> handler, JsonSerializerOptions? options = null) =>
       (request) =>
       {

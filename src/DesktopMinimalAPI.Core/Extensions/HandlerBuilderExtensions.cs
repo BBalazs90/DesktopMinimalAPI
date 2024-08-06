@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Models;
@@ -21,8 +22,8 @@ public static class HandlerBuilderExtensions
     public static HandlerBuilderBase MapGet<TIn1, TIn2, TOut>(this HandlerBuilderBase builder, string route, Func<TIn1, TIn2, TOut> handler) =>
        ApplyRoute<Func<TransformedWmRequest, WmResponse>>(route, builder.MapGet)(Transform(handler));
 
-    //public static HandlerBuilderBase MapGet<T>(this HandlerBuilderBase builder, string route, Func<Task<T>> handler) =>
-    //    ApplyRoute<Func<TransformedWmRequest, WmResponse>>(route, builder.MapGet)(Transform(handler));
+    public static HandlerBuilderBase MapGet<T>(this HandlerBuilderBase builder, string route, Func<Task<T>> handler) =>
+        ApplyRoute<Func<TransformedWmRequest, Task<WmResponse>>>(route, builder.MapGet)(Transform(handler));
 
 
 }

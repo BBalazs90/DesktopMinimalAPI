@@ -2,6 +2,7 @@
 using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Models;
+using DesktopMinimalAPI.Core.Models.Methods;
 using DesktopMinimalAPI.Models;
 using Microsoft.Web.WebView2.Core;
 using System;
@@ -56,34 +57,34 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
             _ => null
         };
 
-        if (handler is null)
-        {
-            var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
-            CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
-            return;
-        }
-
         //if (handler is null)
         //{
-        //    var asyncHandler = request.Method switch
-        //    {
-        //        var method when method == Methods.Get => AsyncGetMessageHandlers.GetValueOrDefault((StringRoute)(request.Path)),
-        //        _ => null
-        //    };
-
-        //    Task.Run(async () => await asyncHandler?
-        //        .Invoke(request)
-        //        .ContinueWith(resp =>
-        //        {
-        //            _context.Post(_ =>
-        //            {
-        //                CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, Serialization.DefaultCamelCase));
-        //            }, null);
-
-        //        }));
-
+        //    var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
+        //    CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
         //    return;
         //}
+
+        if (handler is null)
+        {
+            var asyncHandler = request.Method switch
+            {
+                var method when method == Method.Get => AsyncGetMessageHandlers.GetValueOrDefault((StringRoute)(request.Path)),
+                _ => null
+            };
+
+            Task.Run(async () => await asyncHandler?
+                .Invoke(transformedRequest)
+                .ContinueWith(resp =>
+                {
+                    _context.Post(_ =>
+                    {
+                        CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, Serialization.DefaultCamelCase));
+                    }, null);
+
+                }));
+
+            return;
+        }
 
         var response = handler.Invoke(transformedRequest);
 
@@ -92,8 +93,6 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
 
         static (WmRequest? retrievedRequest, WmResponse? invalidRequestReponse) TryGetRequest(EventArgs e)
         {
-#pragma warning disable CA1031 // Do not catch general exception types
-            // This must catch all exception, because that must be returned to the caller.
             try
             {
                 var request = JsonSerializer.Deserialize<WmRequest>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
@@ -101,16 +100,19 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
                 {
                     null => (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, "The request was not properly formated")),
                     (var id, _, _, _) when id == Guid.Empty => (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, "The request must contain a valid GUID")),
-                    (var id, var method, _, _) when method is null || method == Method.Invalid => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid request method type (GET | POST | PUT | DELETE")),
+                    (var id, var method, _, _) when method is null => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid request method type (GET | POST | PUT | DELETE")),
                     (var id, _, var path, _) when string.IsNullOrWhiteSpace(path) => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid, non-empty path")),
                     _ => (request, null)
                 };
+            }
+            catch (JsonException ex)
+            {
+                return (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
             }
             catch (Exception ex)
             {
                 return (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
             }
-#pragma warning restore CA1031 // Do not catch general exception types
         }
 
         static string GetWebMessageAsString(EventArgs e) =>

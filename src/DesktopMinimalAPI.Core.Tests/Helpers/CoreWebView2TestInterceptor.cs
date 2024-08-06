@@ -1,5 +1,6 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
+using DesktopMinimalAPI.Core.Models.Methods;
 using DesktopMinimalAPI.Models;
 using System.Text.Json;
 

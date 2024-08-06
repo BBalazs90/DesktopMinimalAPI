@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DesktopMinimalAPI.Core.Models.Methods;
+using System;
 
 namespace DesktopMinimalAPI.Models;
 

@@ -1,4 +1,4 @@
-﻿using DesktopMinimalAPI.Models;
+﻿using DesktopMinimalAPI.Core.Models.Methods;
 using System;
 using System.Collections.Immutable;
 

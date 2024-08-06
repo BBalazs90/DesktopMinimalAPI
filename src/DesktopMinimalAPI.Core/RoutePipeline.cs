@@ -1,4 +1,4 @@
-﻿using DesktopMinimalAPI.Core.Abstractions;
+﻿using DesktopMinimalAPI.Core.Models;
 using System.Collections.Immutable;
 using System.Linq;
 
