@@ -16,6 +16,8 @@ internal class WebMessageBrokerBuilderForTest : HandlerBuilderBase
         Task.FromResult<IWebMessageBroker>(new WebMessageBrokerCore(MockCoreWebView2)
         {
             GetMessageHandlers = GetMessageHandlers.ToImmutableDictionary(),
-            AsyncGetMessageHandlers = AsyncGetMessageHandlers.ToImmutableDictionary()
+            PostMessageHandlers = PostMessageHandlers.ToImmutableDictionary(),
+            AsyncGetMessageHandlers = AsyncGetMessageHandlers.ToImmutableDictionary(),
+            AsyncPostMessageHandlers = AsyncPostMessageHandlers.ToImmutableDictionary()
         });
 }

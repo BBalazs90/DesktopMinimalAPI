@@ -147,7 +147,7 @@ public class WhenGetRequestReceived
     [ClassData(typeof(UrlParamsData))]
     public async Task ShouldPassUrlParamToAsyncHandler<TIn, TOut>(string route, Func<TIn, Task<TOut>> handler, TOut expectedResult)
     {
-        _ = _builder.MapGet(route, handler);
+        _ = _builder.MapGet<TIn, TOut>(route, handler);
         _ = await _builder!.BuildAsync();
 
         var guid = _builder.MockCoreWebView2.SimulateGet(route);

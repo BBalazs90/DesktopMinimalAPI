@@ -30,6 +30,13 @@ internal static class CoreWebView2TestInterceptorExtensions
         return guid;
     }
 
+    public static Guid SimulatePost(this CoreWebView2TestInterceptor webView, string path)
+    {
+        var guid = Guid.NewGuid();
+        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequest(guid, (Method)"POST", path), Serialization.DefaultCamelCase));
+        return guid;
+    }
+
     public static WmResponse ReadLastResponse(this CoreWebView2TestInterceptor webView) => 
         JsonSerializer.Deserialize<WmResponse>(webView.LastPostedWebMessageAsString, Serialization.DefaultCamelCase)
         ?? throw new InvalidOperationException($"Could not deserialize the last webmessage. Its content: '{webView.LastPostedWebMessageAsString}'");

@@ -25,7 +25,9 @@ public sealed class PreconfiguredDevServerBasedBuilder : HandlerBuilderBase
         return new WebMessageBrokerCore((CoreWebView2Wrapper)_webView2.CoreWebView2)
         {
             GetMessageHandlers = GetMessageHandlers.ToImmutableDictionary(),
-            AsyncGetMessageHandlers = AsyncGetMessageHandlers.ToImmutableDictionary()
+            PostMessageHandlers = PostMessageHandlers.ToImmutableDictionary(),
+            AsyncGetMessageHandlers = AsyncGetMessageHandlers.ToImmutableDictionary(),
+            AsyncPostMessageHandlers = AsyncPostMessageHandlers.ToImmutableDictionary()
         }; 
     }
 }

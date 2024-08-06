@@ -36,7 +36,9 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
     }
 
     internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, WmResponse>> GetMessageHandlers { get; init; }
+    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, WmResponse>> PostMessageHandlers { get; init; }
     internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> AsyncGetMessageHandlers { get; init; }
+    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> AsyncPostMessageHandlers { get; init; }
 
     internal void OnWebMessageReceived(object? sender, EventArgs e) => StartRequestProcessingPipeline(e);
 
@@ -55,6 +57,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
         var handler = request.Method switch
         {
             var method when method == Method.Get => GetMessageHandlers.GetValueOrDefault(route),
+            var method when method == Method.Post => PostMessageHandlers.GetValueOrDefault(route),
             _ => null
         };
 
@@ -64,6 +67,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
             asyncHandler = request.Method switch
             {
                 var method when method == Method.Get => AsyncGetMessageHandlers.GetValueOrDefault(route),
+                var method when method == Method.Post => AsyncPostMessageHandlers.GetValueOrDefault(route),
                 _ => null
             };
 
