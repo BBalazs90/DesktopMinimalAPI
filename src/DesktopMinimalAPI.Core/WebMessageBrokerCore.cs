@@ -57,16 +57,10 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
             _ => null
         };
 
-        //if (handler is null)
-        //{
-        //    var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
-        //    CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
-        //    return;
-        //}
-
+        Func<TransformedWmRequest, Task<WmResponse>>? asyncHandler = null;
         if (handler is null)
         {
-            var asyncHandler = request.Method switch
+            asyncHandler = request.Method switch
             {
                 var method when method == Method.Get => AsyncGetMessageHandlers.GetValueOrDefault((StringRoute)(request.Path)),
                 _ => null
@@ -83,7 +77,12 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
 
                 }));
 
-            return;
+            if (asyncHandler is null)
+            {
+                var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
+                CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
+                return;
+            }
         }
 
         var response = handler.Invoke(transformedRequest);
@@ -107,11 +106,34 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
             }
             catch (JsonException ex)
             {
-                return (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
+                return TryGetRequestId(e, out var id)
+                    ? (null, new WmResponse(id, HttpStatusCode.BadRequest, ex.Message))
+                    : (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
+            }
+            catch (ArgumentException ex)
+            {
+                return TryGetRequestId(e, out var id)
+                    ? (null, new WmResponse(id, HttpStatusCode.BadRequest, ex.Message))
+                    : (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
             }
             catch (Exception ex)
             {
                 return (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
+            }
+        }
+
+        static bool TryGetRequestId(EventArgs e, out Guid requestId)
+        {
+            try
+            {
+                var guidPart = JsonSerializer.Deserialize<GuidPartOfRequest>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
+                requestId = guidPart is null ? Guid.Empty : guidPart.RequestId;
+                return guidPart is not null;
+            }
+            catch (JsonException)
+            {
+                requestId = Guid.Empty;
+                return false;
             }
         }
 
@@ -128,6 +150,12 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
 
         void PostResponse(WmResponse response) =>
             CoreWebView.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
+
+    }
+
+    class GuidPartOfRequest(Guid requestId)
+    {
+        public Guid RequestId { get; } = requestId;
     }
 }
 
