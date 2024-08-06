@@ -3,6 +3,7 @@ using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Core.Models.Methods;
+using DesktopMinimalAPI.Core.RequestHandling;
 using DesktopMinimalAPI.Models;
 using Microsoft.Web.WebView2.Core;
 using System;
@@ -41,7 +42,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
 
     private void StartRequestProcessingPipeline(EventArgs e)
     {
-        var (request, invalidRequestReponse) = TryGetRequest(e);
+        var (request, invalidRequestReponse) = RequestReaderPipeline.TryGetRequest(e);
         if (invalidRequestReponse is not null)
         {
             PostResponse(invalidRequestReponse);
@@ -89,73 +90,11 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
 
         CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
 
-
-        static (WmRequest? retrievedRequest, WmResponse? invalidRequestReponse) TryGetRequest(EventArgs e)
-        {
-            try
-            {
-                var request = JsonSerializer.Deserialize<WmRequest>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
-                return request switch
-                {
-                    null => (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, "The request was not properly formated")),
-                    (var id, _, _, _) when id == Guid.Empty => (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, "The request must contain a valid GUID")),
-                    (var id, var method, _, _) when method is null => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid request method type (GET | POST | PUT | DELETE")),
-                    (var id, _, var path, _) when string.IsNullOrWhiteSpace(path) => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid, non-empty path")),
-                    _ => (request, null)
-                };
-            }
-            catch (JsonException ex)
-            {
-                return TryGetRequestId(e, out var id)
-                    ? (null, new WmResponse(id, HttpStatusCode.BadRequest, ex.Message))
-                    : (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
-            }
-            catch (ArgumentException ex)
-            {
-                return TryGetRequestId(e, out var id)
-                    ? (null, new WmResponse(id, HttpStatusCode.BadRequest, ex.Message))
-                    : (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
-            }
-        }
-
-        static bool TryGetRequestId(EventArgs e, out Guid requestId)
-        {
-            try
-            {
-                var guidPart = JsonSerializer.Deserialize<GuidPartOfRequest>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
-                requestId = guidPart is null ? Guid.Empty : guidPart.RequestId;
-                return guidPart is not null;
-            }
-            catch (JsonException)
-            {
-                requestId = Guid.Empty;
-                return false;
-            }
-        }
-
-        static string GetWebMessageAsString(EventArgs e) =>
-            // This required for testing purposes, since CoreWebView2WebMessageReceivedEventArgs has no public ctr, thus not possible to simulate
-            // the even fire. Therefore reflection magic is needed, but this overhead is eliminated in prod.
-#if DEBUG
-            e is CoreWebView2WebMessageReceivedEventArgs cwvArg
-            ? cwvArg.WebMessageAsJson
-            : (e.GetType().GetProperty("WebMessageAsJson")?.GetValue(e) as string ?? throw new ArgumentException("The provided type has no WebMessageAsJson property"));
-#else
-        ((CoreWebView2WebMessageReceivedEventArgs)e).WebMessageAsJson;
-#endif
+       
 
         void PostResponse(WmResponse response) =>
             CoreWebView.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
 
-    }
-
-    class GuidPartOfRequest(Guid requestId)
-    {
-        public Guid RequestId { get; } = requestId;
     }
 }
 
