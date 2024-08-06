@@ -63,11 +63,18 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
         {
             asyncHandler = request.Method switch
             {
-                var method when method == Method.Get => AsyncGetMessageHandlers.GetValueOrDefault((StringRoute)(request.Path)),
+                var method when method == Method.Get => AsyncGetMessageHandlers.GetValueOrDefault(route),
                 _ => null
             };
 
-            Task.Run(async () => await asyncHandler?
+            if (asyncHandler is null)
+            {
+                var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
+                CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
+                return;
+            }
+
+            Task.Run(async () => await asyncHandler
                 .Invoke(transformedRequest)
                 .ContinueWith(resp =>
                 {
@@ -77,13 +84,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
                     }, null);
 
                 }));
-
-            if (asyncHandler is null)
-            {
-                var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
-                CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
-                return;
-            }
+            return;
         }
 
         var response = handler.Invoke(transformedRequest);
