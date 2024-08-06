@@ -29,7 +29,8 @@ internal static class HandlerPipeline
       {
           try
           {
-              var result = handler(default);
+              var p1 = TryGetParameter<Tin>(request.ParameterInfos[0], options);
+              var result = handler(p1);
               return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
           }
           catch (Exception ex)
