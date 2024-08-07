@@ -27,7 +27,7 @@ public class WhenGetRequestReceived
 
         var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.OK);
         _ = response.RequestId.Should().Be(guid);
         _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(HandlerReturn);
@@ -43,7 +43,7 @@ public class WhenGetRequestReceived
 
         var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.InternalServerError);
         _ = response.RequestId.Should().Be(guid);
         _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(errorMessage);
@@ -60,7 +60,7 @@ public class WhenGetRequestReceived
 
         var guid = _builder.MockCoreWebView2.SimulateGet(notRegisteredPath);
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.NotFound);
         _ = response.RequestId.Should().Be(guid);
         _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Contain(notRegisteredPath);
@@ -76,7 +76,7 @@ public class WhenGetRequestReceived
 
         _builder.MockCoreWebView2.RaiseWebMessageReceived(serializedRequest);
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.BadRequest);
         _ = response.RequestId.Should().Be(Guid.Empty);
     }
@@ -91,7 +91,7 @@ public class WhenGetRequestReceived
 
         _builder.MockCoreWebView2.RaiseWebMessageReceived(serializedRequest);
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.BadRequest);
         _ = response.RequestId.Should().Be(Guid.Parse("00000001-0000-0001-0000-000000000001"));
     }
@@ -106,7 +106,7 @@ public class WhenGetRequestReceived
 
         _builder.MockCoreWebView2.RaiseWebMessageReceived(serializedRequest);
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.BadRequest);
         _ = response.RequestId.Should().Be(Guid.Parse("00000001-0000-0001-0000-000000000001"));
     }
@@ -122,7 +122,7 @@ public class WhenGetRequestReceived
 
         _builder.MockCoreWebView2.RaiseWebMessageReceived(serializedRequest);
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.BadRequest);
         _ = response.RequestId.Should().Be(Guid.Empty);
     }
@@ -137,7 +137,7 @@ public class WhenGetRequestReceived
 
         var guid = _builder.MockCoreWebView2.SimulateGet(route);
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.OK);
         _ = response.RequestId.Should().Be(guid);
         _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
@@ -167,7 +167,7 @@ public class WhenGetRequestReceived
 
         var guid = _builder.MockCoreWebView2.SimulateGet(_testPath, JsonSerializer.Serialize(param, Serialization.DefaultCamelCase));
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.OK);
         _ = response.RequestId.Should().Be(guid);
         _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
@@ -197,7 +197,7 @@ public class WhenGetRequestReceived
 
         var guid = _builder.MockCoreWebView2.SimulateGet(route);
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.OK);
         _ = response.RequestId.Should().Be(guid);
         _ = JsonSerializer.Deserialize<T>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);

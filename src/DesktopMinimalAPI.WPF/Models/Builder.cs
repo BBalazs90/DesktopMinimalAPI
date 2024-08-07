@@ -22,8 +22,6 @@ public sealed class Builder : HandlerBuilderBase
         {
             GetMessageHandlers = GetMessageHandlers.ToImmutableDictionary(),
             PostMessageHandlers = PostMessageHandlers.ToImmutableDictionary(),
-            AsyncGetMessageHandlers = AsyncGetMessageHandlers.ToImmutableDictionary(),
-            AsyncPostMessageHandlers = AsyncPostMessageHandlers.ToImmutableDictionary(),
         };
     }
 }

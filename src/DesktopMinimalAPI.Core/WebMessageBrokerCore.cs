@@ -35,10 +35,8 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
         _context = SynchronizationContext.Current;
     }
 
-    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, WmResponse>> GetMessageHandlers { get; init; }
-    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, WmResponse>> PostMessageHandlers { get; init; }
-    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> AsyncGetMessageHandlers { get; init; }
-    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> AsyncPostMessageHandlers { get; init; }
+    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> GetMessageHandlers { get; init; }
+    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> PostMessageHandlers { get; init; }
 
     internal void OnWebMessageReceived(object? sender, EventArgs e) => StartRequestProcessingPipeline(e);
 
@@ -61,41 +59,25 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
             _ => null
         };
 
-        Func<TransformedWmRequest, Task<WmResponse>>? asyncHandler = null;
         if (handler is null)
         {
-            asyncHandler = request.Method switch
-            {
-                var method when method == Method.Get => AsyncGetMessageHandlers.GetValueOrDefault(route),
-                var method when method == Method.Post => AsyncPostMessageHandlers.GetValueOrDefault(route),
-                _ => null
-            };
-
-            if (asyncHandler is null)
-            {
-                var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
-                CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
-                return;
-            }
-
-            Task.Run(async () => await asyncHandler
-                .Invoke(transformedRequest)
-                .ContinueWith(resp =>
-                {
-                    _context.Post(_ =>
-                    {
-                        CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, Serialization.DefaultCamelCase));
-                    }, null);
-
-                }));
+            var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
+            CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
             return;
         }
 
-        var response = handler.Invoke(transformedRequest);
+        Task.Run(async () => await handler
+            .Invoke(transformedRequest)
+            .ContinueWith(resp =>
+            {
+                _context.Post(_ =>
+                {
+                    CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, Serialization.DefaultCamelCase));
+                }, null);
 
-        CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
+            }));
 
-       
+
 
         void PostResponse(WmResponse response) =>
             CoreWebView.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));

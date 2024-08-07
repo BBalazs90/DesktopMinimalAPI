@@ -26,7 +26,7 @@ public class WhenPostRequestReceived
 
         var guid = _builder.MockCoreWebView2.SimulatePost(_testPath);
 
-        var response = _builder.MockCoreWebView2.ReadLastResponse();
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.OK);
         _ = response.RequestId.Should().Be(guid);
         _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(HandlerReturn);

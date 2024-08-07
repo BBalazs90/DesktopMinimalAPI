@@ -26,8 +26,6 @@ public sealed class PreconfiguredDevServerBasedBuilder : HandlerBuilderBase
         {
             GetMessageHandlers = GetMessageHandlers.ToImmutableDictionary(),
             PostMessageHandlers = PostMessageHandlers.ToImmutableDictionary(),
-            AsyncGetMessageHandlers = AsyncGetMessageHandlers.ToImmutableDictionary(),
-            AsyncPostMessageHandlers = AsyncPostMessageHandlers.ToImmutableDictionary()
         }; 
     }
 }
