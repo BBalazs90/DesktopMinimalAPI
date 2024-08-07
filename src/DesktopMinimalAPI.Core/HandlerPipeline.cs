@@ -55,6 +55,23 @@ internal static class HandlerPipeline
           }
       };
 
+    public static Func<TransformedWmRequest, WmResponse> Transform<TIn1, TIn2, TIn3, TOut>(Func<TIn1, TIn2, TIn3, TOut> handler, JsonSerializerOptions? options = null) =>
+     (request) =>
+     {
+         try
+         {
+             var p1 = TryGetParameter<TIn1>(request.ParameterInfos[0], options);
+             var p2 = TryGetParameter<TIn2>(request.ParameterInfos[1], options);
+             var p3 = TryGetParameter<TIn3>(request.ParameterInfos[2], options);
+             var result = handler(p1, p2, p3);
+             return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
+         }
+         catch (Exception ex)
+         {
+             return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
+         }
+     };
+
     public static Func<TransformedWmRequest, Task<WmResponse>> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
       (request) =>
       {
