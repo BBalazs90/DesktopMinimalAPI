@@ -23,10 +23,10 @@ internal class CoreWebView2TestInterceptor : ICoreWebView2
 
 internal static class CoreWebView2TestInterceptorExtensions
 {
-    public static Guid SimulateGet(this CoreWebView2TestInterceptor webView, string path)
+    public static Guid SimulateGet(this CoreWebView2TestInterceptor webView, string path, string? body = null)
     {
         var guid = Guid.NewGuid();
-        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequest(guid, (Method)"GET", path), Serialization.DefaultCamelCase));
+        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequest(guid, (Method)"GET", path, body), Serialization.DefaultCamelCase));
         return guid;
     }
 

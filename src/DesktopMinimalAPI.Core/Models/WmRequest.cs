@@ -17,7 +17,7 @@ internal static class WmRequestBuilder
         var method = (Method)requestDto.Method;
         var path = !string.IsNullOrWhiteSpace(requestDto.Path) ? requestDto.Path : throw new ArgumentNullException(nameof(WmRequestDto.Path));
 
-        return new WmRequest(requestId, method, path, requestDto.Path);
+        return new WmRequest(requestId, method, path, requestDto.Body);
     }
 }
 

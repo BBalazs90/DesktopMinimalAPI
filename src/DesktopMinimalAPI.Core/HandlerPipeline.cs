@@ -88,7 +88,9 @@ internal static class HandlerPipeline
     {
         try
         {
-            return typeof(T).IsAssignableTo(typeof(IConvertible)) ? (T)Convert.ChangeType(parameter.SerializedParameter, typeof(T)) : default;
+            return typeof(T).IsAssignableTo(typeof(IConvertible))
+                ? (T)Convert.ChangeType(parameter.SerializedParameter, typeof(T))
+                : JsonSerializer.Deserialize<T>(parameter.SerializedParameter, options ?? Serialization.DefaultCamelCase);
         }
         catch (Exception ex)
         {

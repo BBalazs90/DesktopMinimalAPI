@@ -129,7 +129,7 @@ public class WhenGetRequestReceived
 
 
     [Theory]
-    [ClassData(typeof(UrlParamsData))]
+    [ClassData(typeof(UrlParamData))]
     public async Task ShouldPassUrlParamToHandler<TIn,TOut>(string route, Func<TIn, TOut> handler, TOut expectedResult)
     {
         _ = _builder.MapGet(route, handler);
@@ -143,20 +143,50 @@ public class WhenGetRequestReceived
         _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
 
+    //[Theory]
+    //[ClassData(typeof(UrlParamData))]
+    //public async Task ShouldPassUrlParamToAsyncHandler<TIn, TOut>(string route, Func<TIn, Task<TOut>> handler, TOut expectedResult)
+    //{
+    //    _ = _builder.MapGet(route, handler);
+    //    _ = await _builder!.BuildAsync();
+
+    //    var guid = _builder.MockCoreWebView2.SimulateGet(route);
+
+    //    var response = _builder.MockCoreWebView2.ReadLastResponse();
+    //    _ = response.Status.Should().Be(HttpStatusCode.OK);
+    //    _ = response.RequestId.Should().Be(guid);
+    //    _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
+    //}
+
     [Theory]
-    [ClassData(typeof(UrlParamsData))]
-    public async Task ShouldPassUrlParamToAsyncHandler<TIn, TOut>(string route, Func<TIn, Task<TOut>> handler, TOut expectedResult)
+    [ClassData(typeof(BodyParamData))]
+    public async Task ShouldPassBodyParamToHandler<TIn, TOut>(TIn param, Func<TIn, TOut> handler, TOut expectedResult)
     {
-        _ = _builder.MapGet<TIn, TOut>(route, handler);
+        _ = _builder.MapGet(_testPath, handler);
         _ = await _builder!.BuildAsync();
 
-        var guid = _builder.MockCoreWebView2.SimulateGet(route);
+        var guid = _builder.MockCoreWebView2.SimulateGet(_testPath, JsonSerializer.Serialize(param, Serialization.DefaultCamelCase));
 
         var response = _builder.MockCoreWebView2.ReadLastResponse();
         _ = response.Status.Should().Be(HttpStatusCode.OK);
         _ = response.RequestId.Should().Be(guid);
         _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
+
+    //[Theory]
+    //[ClassData(typeof(BodyParamData))]
+    //public async Task ShouldPassBodyParamToAsyncHandler<TIn, TOut>(TIn param, Func<TIn, Task<TOut>> handler, TOut expectedResult)
+    //{
+    //    _ = _builder.MapGet(route, handler);
+    //    _ = await _builder!.BuildAsync();
+
+    //    var guid = _builder.MockCoreWebView2.SimulateGet(route);
+
+    //    var response = _builder.MockCoreWebView2.ReadLastResponse();
+    //    _ = response.Status.Should().Be(HttpStatusCode.OK);
+    //    _ = response.RequestId.Should().Be(guid);
+    //    _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
+    //}
 
     [Theory]
     [ClassData(typeof(Url2ParamsData))]
@@ -174,7 +204,7 @@ public class WhenGetRequestReceived
     }
 }
 
-public class UrlParamsData : IEnumerable<object[]>
+public class UrlParamData : IEnumerable<object[]>
 {
     public IEnumerator<object[]> GetEnumerator()
     {
@@ -187,6 +217,23 @@ public class UrlParamsData : IEnumerable<object[]>
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
+public class BodyParamData : IEnumerable<object[]>
+{
+    public IEnumerator<object[]> GetEnumerator()
+    {
+        yield return new object[] { new UserPwd("bbalazs", "secretPass"), (UserPwd userPwd) => userPwd.User+userPwd.Password, "bbalazssecretPass" };
+       
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
+public class UserPwd(string user, string password)
+{
+    public string User { get; } = user;
+    public string Password { get; } = password;
 }
 
 public class UrlParamsDataAsync : IEnumerable<object[]>
