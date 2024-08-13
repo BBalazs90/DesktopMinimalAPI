@@ -19,14 +19,6 @@ internal static class RequestReaderPipeline
         try
         {
             var requestDto = JsonSerializer.Deserialize<WmRequestDto>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
-            //return request switch
-            //{
-            //    null => (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, "The request was not properly formated")),
-            //    (var id, _, _, _) when id == Guid.Empty => (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, "The request must contain a valid GUID")),
-            //    (var id, var method, _, _) when method is null => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid request method type (GET | POST | PUT | DELETE")),
-            //    (var id, _, var path, _) when string.IsNullOrWhiteSpace(path) => (null, new WmResponse(id, HttpStatusCode.BadRequest, "The request must contain a valid, non-empty path")),
-            //    _ => (request, null)
-            //};
             return (WmRequestBuilder.BuildFrom(requestDto), null);
         }
         catch (JsonException ex)

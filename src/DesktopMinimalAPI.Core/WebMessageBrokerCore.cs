@@ -66,16 +66,13 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
             return;
         }
 
-        Task.Run(async () => await handler
+        _ = Task.Run(async () => await handler
             .Invoke(transformedRequest)
-            .ContinueWith(resp =>
-            {
-                _context.Post(_ =>
-                {
-                    CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, Serialization.DefaultCamelCase));
-                }, null);
-
-            }));
+            .ContinueWith(resp => 
+                _context?.Post(
+                    _ => CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, Serialization.DefaultCamelCase)), null),
+                    TaskScheduler.Current)
+            .ConfigureAwait(false));
 
 
 

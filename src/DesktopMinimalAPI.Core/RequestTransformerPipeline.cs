@@ -6,9 +6,7 @@ using System.Linq;
 namespace DesktopMinimalAPI.Core;
 internal static class RequestTransformerPipeline
 {
-    public static TransformedWmRequest Transform(WmRequest original)
-    {
-        return new TransformedWmRequest(
+    public static TransformedWmRequest Transform(WmRequest original) => new(
             original.RequestId,
             original.Method,
             RoutePipeline
@@ -16,5 +14,4 @@ internal static class RequestTransformerPipeline
                 .Select(nameValue => new RequestParameterIntermediate(nameValue.Name, nameValue.Value))
                 .Append(new RequestParameterIntermediate("body", original.Body))
                 .ToImmutableArray());
-    }
 }

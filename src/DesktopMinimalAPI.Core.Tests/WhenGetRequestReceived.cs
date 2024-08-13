@@ -39,7 +39,7 @@ public class WhenGetRequestReceived
         const string errorMessage = "Oh, noooo!";
         Func<int> handler = () => throw new Exception(errorMessage); // Explicit type because from exception cannot be infered.
         _ = _builder.MapGet(_testPath, handler);
-        var broker = await _builder!.BuildAsync();
+        _ = await _builder!.BuildAsync();
 
         var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
 
