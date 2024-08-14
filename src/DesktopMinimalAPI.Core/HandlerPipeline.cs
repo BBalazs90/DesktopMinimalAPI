@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -21,6 +22,20 @@ internal static class HandlerPipeline
           try
           {
               var result = handler();
+              return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
+          }
+          catch (Exception ex)
+          {
+              return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
+          }
+      };
+
+    internal static Func<TransformedWmRequest, WmResponse> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
+      (request) =>
+      {
+          try
+          {
+              var result = handler().GetAwaiter().GetResult();
               return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
           }
           catch (Exception ex)
@@ -77,21 +92,21 @@ internal static class HandlerPipeline
          }
      };
 
-    public static Func<TransformedWmRequest, Task<WmResponse>> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
-      (request) =>
-      {
-          try
-          {
-              var result = handler();
-              return result
-              .ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)), 
-              TaskScheduler.Current);
-          }
-          catch (Exception ex)
-          {
-              return Task.FromResult(new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
-          }
-      };
+    //public static Func<TransformedWmRequest, Task<WmResponse>> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
+    //  (request) =>
+    //  {
+    //      try
+    //      {
+    //          var result = handler();
+    //          return result
+    //          .ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)), 
+    //          TaskScheduler.Current);
+    //      }
+    //      catch (Exception ex)
+    //      {
+    //          return Task.FromResult(new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
+    //      }
+    //  };
 
     public static Func<TransformedWmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<TIn, Task<TOut>> handler, JsonSerializerOptions? options = null) =>
       (request) =>

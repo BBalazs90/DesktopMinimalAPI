@@ -130,7 +130,7 @@ public class WhenGetRequestReceived
 
     [Theory]
     [ClassData(typeof(UrlParamData))]
-    public async Task ShouldPassUrlParamToHandler<TIn,TOut>(string route, Func<TIn, TOut> handler, TOut expectedResult)
+    public async Task ShouldPassUrlParamToHandler<TIn, TOut>(string route, Func<TIn, TOut> handler, TOut expectedResult)
     {
         _ = _builder.MapGet(route, handler);
         _ = await _builder!.BuildAsync();
@@ -143,20 +143,6 @@ public class WhenGetRequestReceived
         _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
 
-    //[Theory]
-    //[ClassData(typeof(UrlParamData))]
-    //public async Task ShouldPassUrlParamToAsyncHandler<TIn, TOut>(string route, Func<TIn, Task<TOut>> handler, TOut expectedResult)
-    //{
-    //    _ = _builder.MapGet(route, handler);
-    //    _ = await _builder!.BuildAsync();
-
-    //    var guid = _builder.MockCoreWebView2.SimulateGet(route);
-
-    //    var response = _builder.MockCoreWebView2.ReadLastResponse();
-    //    _ = response.Status.Should().Be(HttpStatusCode.OK);
-    //    _ = response.RequestId.Should().Be(guid);
-    //    _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
-    //}
 
     [Theory]
     [ClassData(typeof(BodyParamData))]
@@ -173,20 +159,7 @@ public class WhenGetRequestReceived
         _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
 
-    //[Theory]
-    //[ClassData(typeof(BodyParamData))]
-    //public async Task ShouldPassBodyParamToAsyncHandler<TIn, TOut>(TIn param, Func<TIn, Task<TOut>> handler, TOut expectedResult)
-    //{
-    //    _ = _builder.MapGet(route, handler);
-    //    _ = await _builder!.BuildAsync();
 
-    //    var guid = _builder.MockCoreWebView2.SimulateGet(route);
-
-    //    var response = _builder.MockCoreWebView2.ReadLastResponse();
-    //    _ = response.Status.Should().Be(HttpStatusCode.OK);
-    //    _ = response.RequestId.Should().Be(guid);
-    //    _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
-    //}
 
     [Theory]
     [ClassData(typeof(Url2ParamsData))]
@@ -201,6 +174,22 @@ public class WhenGetRequestReceived
         _ = response.Status.Should().Be(HttpStatusCode.OK);
         _ = response.RequestId.Should().Be(guid);
         _ = JsonSerializer.Deserialize<T>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
+    }
+
+    [Fact]
+    public async Task ShouldReturnResponseResultAsBodyEvenIfHandlerReturnsTask()
+    {
+        var testBody = new TestBody("Balazs", 34);
+        var handler = async () => await Task.FromResult(testBody);
+        _ = _builder.MapGet(_testPath, handler);
+        _ = await _builder!.BuildAsync();
+
+        var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
+
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
+        _ = response.Status.Should().Be(HttpStatusCode.OK);
+        _ = response.RequestId.Should().Be(guid);
+        _ = JsonSerializer.Deserialize<TestBody>(response.Data, Serialization.DefaultCamelCase).Should().Be(testBody);
     }
 }
 
@@ -223,8 +212,8 @@ public class BodyParamData : IEnumerable<object[]>
 {
     public IEnumerator<object[]> GetEnumerator()
     {
-        yield return new object[] { new UserPwd("bbalazs", "secretPass"), (UserPwd userPwd) => userPwd.User+userPwd.Password, "bbalazssecretPass" };
-       
+        yield return new object[] { new UserPwd("bbalazs", "secretPass"), (UserPwd userPwd) => userPwd.User + userPwd.Password, "bbalazssecretPass" };
+
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
@@ -240,7 +229,7 @@ public class UrlParamsDataAsync : IEnumerable<object[]>
 {
     public IEnumerator<object[]> GetEnumerator()
     {
-        yield return new object[] { "/test?param1=1", (int param1) => Task.FromResult(2*param1), 2 * 1 };
+        yield return new object[] { "/test?param1=1", (int param1) => Task.FromResult(2 * param1), 2 * 1 };
         yield return new object[] { "/test?param1=1", (int param1) => Task.FromResult(2.3 * param1), 2.3 * 1 };
         yield return new object[] { "/test?param1=1.2", (double param1) => Task.FromResult(2 * param1), 2 * 1.2 };
         yield return new object[] { "/test?param1=1.2", (double param1) => Task.FromResult((int)Math.Floor(param1)), 1 };
@@ -262,3 +251,5 @@ public class Url2ParamsData : IEnumerable<object[]>
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 }
+
+internal record TestBody(string Name, int Age);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
 using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Models;
@@ -17,7 +18,10 @@ public static class HandlerBuilderExtensions
 
     public static HandlerBuilderBase MapGet<TOut>(this HandlerBuilderBase builder, string route, Func<TOut> handler) =>
         ApplyRoute<Func<TransformedWmRequest, WmResponse>>(route, builder.MapGet)(Transform(handler));
-    
+
+    public static HandlerBuilderBase MapGet<TOut>(this HandlerBuilderBase builder, string route, Func<Task<TOut>> handler) =>
+        ApplyRoute<Func<TransformedWmRequest, WmResponse>>(route, builder.MapGet)(Transform(handler));
+
     public static HandlerBuilderBase MapGet<TIn, TOut>(this HandlerBuilderBase builder, string route, Func<TIn, TOut> handler) =>
       ApplyRoute<Func<TransformedWmRequest, WmResponse>>(route, builder.MapGet)(Transform(handler));
 
