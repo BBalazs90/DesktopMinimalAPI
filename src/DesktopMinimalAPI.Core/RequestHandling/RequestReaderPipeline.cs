@@ -1,39 +1,45 @@
 ﻿using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Models.Dtos;
 using DesktopMinimalAPI.Models;
+using LanguageExt;
 using Microsoft.Web.WebView2.Core;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace DesktopMinimalAPI.Core.RequestHandling;
 
 internal static class RequestReaderPipeline
 {
-    public static (WmRequest? retrievedRequest, WmResponse? invalidRequestReponse) TryGetRequest(EventArgs e)
-    {
-        try
-        {
-            var requestDto = JsonSerializer.Deserialize<WmRequestDto>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
-            return (WmRequestBuilder.BuildFrom(requestDto), null);
-        }
-        catch (JsonException ex)
-        {
-            return TryGetRequestId(e, out var id)
-                ? (null, new WmResponse(id, HttpStatusCode.BadRequest, ex.Message))
-                : (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
-        }
-        catch (ArgumentException ex)
-        {
-            return TryGetRequestId(e, out var id)
-                ? (null, new WmResponse(id, HttpStatusCode.BadRequest, ex.Message))
-                : (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
-        }
-    }
+    public static Either<Exception, WmRequestType> DecodeRequest(EventArgs e) =>
+        WmRequest.From(JsonSerializer.Deserialize<WmRequestDto>(GetWebMessageAsString(e), Serialization.DefaultCamelCase));
+
+
+
+    //{
+    //    try
+    //    {
+    //        var requestDto = JsonSerializer.Deserialize<WmRequestDto>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
+    //        return (WmRequestBuilder.BuildFrom(requestDto), null);
+    //    }
+    //    catch (JsonException ex)
+    //    {
+    //        return TryGetRequestId(e, out var id)
+    //            ? (null, new WmResponse(id, HttpStatusCode.BadRequest, ex.Message))
+    //            : (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
+    //    }
+    //    catch (ArgumentException ex)
+    //    {
+    //        return TryGetRequestId(e, out var id)
+    //            ? (null, new WmResponse(id, HttpStatusCode.BadRequest, ex.Message))
+    //            : (null, new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, ex.Message));
+    //    }
+    //}
+
+    private static Either<JsonException, WmRequestDto> TryDeserialize(string json) =>
+        JsonSerializer.Deserialize<WmRequestDto>(json, Serialization.DefaultCamelCase) is WmRequestDto dto
+        ? dto
+        : new JsonException("Could not deserialize the request.");
 
     private static string GetWebMessageAsString(EventArgs e) =>
            // This required for testing purposes, since CoreWebView2WebMessageReceivedEventArgs has no public ctr, thus not possible to simulate

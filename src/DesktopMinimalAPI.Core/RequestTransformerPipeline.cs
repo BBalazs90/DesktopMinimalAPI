@@ -6,7 +6,7 @@ using System.Linq;
 namespace DesktopMinimalAPI.Core;
 internal static class RequestTransformerPipeline
 {
-    public static TransformedWmRequest Transform(WmRequest original) => new(
+    public static TransformedWmRequest Transform(WmRequestType original) => new(
             original.RequestId,
             original.Method,
             RoutePipeline
