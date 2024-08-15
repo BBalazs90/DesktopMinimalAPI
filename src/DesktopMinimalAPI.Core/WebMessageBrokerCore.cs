@@ -1,6 +1,7 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Models;
+using DesktopMinimalAPI.Core.Models.Exceptions;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
 using System;
@@ -43,7 +44,11 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
             .Map(SafeInvokeHandler)
             .Match(
                 Right: response => response,
-                Left: ex => new WmResponse(Guid.Empty, HttpStatusCode.InternalServerError, ex.Message)
+                Left: ex => ex switch
+                {
+                    RequestException reqEx => new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, reqEx.Message + " \n" + reqEx.InnerException?.Message),
+                    _ => new WmResponse(Guid.Empty, HttpStatusCode.InternalServerError, ex.Message)
+                }
                 );
 
 

@@ -1,5 +1,6 @@
 ﻿using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Models.Dtos;
+using DesktopMinimalAPI.Core.Models.Exceptions;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
 using Microsoft.Web.WebView2.Core;
@@ -12,7 +13,8 @@ namespace DesktopMinimalAPI.Core.RequestHandling;
 internal static class RequestReaderPipeline
 {
     public static Either<Exception, WmRequestType> DecodeRequest(EventArgs e) =>
-        WmRequest.From(JsonSerializer.Deserialize<WmRequestDto>(GetWebMessageAsString(e), Serialization.DefaultCamelCase));
+            new Try<WmRequestDto>(() => JsonSerializer.Deserialize<WmRequestDto>(GetWebMessageAsString(e), Serialization.DefaultCamelCase))
+        .Match(Succ: WmRequest.From, Fail: ex => RequestException.From(ex));
 
 
 
