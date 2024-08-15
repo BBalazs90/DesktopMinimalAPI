@@ -1,4 +1,5 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
+using DesktopMinimalAPI.Core.Features.HandlerRegistration;
 using System.Collections.Immutable;
 
 namespace DesktopMinimalAPI.Core.Tests.Helpers;

@@ -30,19 +30,19 @@ internal static class HandlerPipeline
           }
       };
 
-    internal static Func<TransformedWmRequest, WmResponse> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
-      (request) =>
-      {
-          try
-          {
-              var result = handler().GetAwaiter().GetResult();
-              return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
-          }
-          catch (Exception ex)
-          {
-              return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
-          }
-      };
+    //internal static Func<TransformedWmRequest, WmResponse> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
+    //  (request) =>
+    //  {
+    //      try
+    //      {
+    //          var result = handler().GetAwaiter().GetResult();
+    //          return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
+    //      }
+    //      catch (Exception ex)
+    //      {
+    //          return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
+    //      }
+    //  };
 
     public static Func<TransformedWmRequest, WmResponse> Transform<TIn, TOut>(Func<TIn, TOut> handler, JsonSerializerOptions? options = null) =>
       (request) =>
@@ -92,21 +92,21 @@ internal static class HandlerPipeline
          }
      };
 
-    //public static Func<TransformedWmRequest, Task<WmResponse>> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
-    //  (request) =>
-    //  {
-    //      try
-    //      {
-    //          var result = handler();
-    //          return result
-    //          .ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)), 
-    //          TaskScheduler.Current);
-    //      }
-    //      catch (Exception ex)
-    //      {
-    //          return Task.FromResult(new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
-    //      }
-    //  };
+    public static Func<TransformedWmRequest, Task<WmResponse>> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
+      (request) =>
+      {
+          try
+          {
+              var result = handler();
+              return result
+              .ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
+              TaskScheduler.Current);
+          }
+          catch (Exception ex)
+          {
+              return Task.FromResult(new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
+          }
+      };
 
     public static Func<TransformedWmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<TIn, Task<TOut>> handler, JsonSerializerOptions? options = null) =>
       (request) =>
