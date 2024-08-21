@@ -130,30 +130,30 @@ internal static class HandlerPipeline
           }
       };
 
-    private static T? TryGetParameter<T>(RequestParameterIntermediate parameter, JsonSerializerOptions? options = null)
-    {
-        try
-        {
-            return typeof(T).IsAssignableTo(typeof(IConvertible))
-                ? (T)Convert.ChangeType(parameter.SerializedParameter, typeof(T), CultureInfo.InvariantCulture)
-                : JsonSerializer.Deserialize<T>(parameter.SerializedParameter, options ?? Serialization.DefaultCamelCase) ?? default;
-        }
-        catch (InvalidCastException)
-        {
-            return default;
-        }
-        catch (FormatException)
-        {
-            return default;
-        }
-        catch (ArgumentNullException)
-        {
-            return default;
-        }
-        catch (JsonException)
-        {
-            return default;
-        }
-    }
+    //private static T? TryGetParameter<T>(RequestParameterIntermediate parameter, JsonSerializerOptions? options = null)
+    //{
+    //    try
+    //    {
+    //        return typeof(T).IsAssignableTo(typeof(IConvertible))
+    //            ? (T)Convert.ChangeType(parameter.SerializedParameter, typeof(T), CultureInfo.InvariantCulture)
+    //            : JsonSerializer.Deserialize<T>(parameter.SerializedParameter, options ?? Serialization.DefaultCamelCase) ?? default;
+    //    }
+    //    catch (InvalidCastException)
+    //    {
+    //        return default;
+    //    }
+    //    catch (FormatException)
+    //    {
+    //        return default;
+    //    }
+    //    catch (ArgumentNullException)
+    //    {
+    //        return default;
+    //    }
+    //    catch (JsonException)
+    //    {
+    //        return default;
+    //    }
+    //}
 }
 

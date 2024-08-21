@@ -8,12 +8,6 @@ namespace DesktopMinimalAPI.Core;
 
 internal static class RoutePipeline
 {
-    public static Route GetRoot(string path) => Route.From(path).ValueUnsafe();
-        //path switch
-        //{
-        //    _ when path.IndexOf('?') > 0 => new StringRoute(path.Split('?')[0]),
-        //    _ => new StringRoute(path)
-        //};
 
     public static ImmutableArray<(string Name, string Value)> GetParameters(string path) =>
         path switch

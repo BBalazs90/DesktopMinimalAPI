@@ -6,6 +6,7 @@ using DesktopMinimalAPI.Core.Features.HandlerRegistration;
 using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
+using LanguageExt.UnsafeValueAccess;
 using static DesktopMinimalAPI.Core.HandlerPipeline;
 using static DesktopMinimalAPI.Core.RoutePipeline;
 
@@ -16,7 +17,7 @@ namespace DesktopMinimalAPI.Extensions;
 public static class HandlerBuilderExtensions
 {
     private static Func<T, HandlerBuilderBase> ApplyRoute<T>(string route, Func<Route, T, HandlerBuilderBase> f) =>
-        (T handler) => f(GetRoot(route), handler);
+        (T handler) => f(Route.From(route).ValueUnsafe(), handler);
 
     public static HandlerBuilderBase MapGet<TOut>(this HandlerBuilderBase builder, string route, Func<TOut> handler) =>
         ApplyRoute<Func<WmRequest, WmResponse>>(route, builder.MapGet)(Transform(handler));
