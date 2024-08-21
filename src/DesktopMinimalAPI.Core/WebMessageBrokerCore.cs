@@ -6,6 +6,7 @@ using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -44,7 +45,8 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
                 Right: response => response,
                 Left: ex => ex switch
                 {
-                    RequestException reqEx => new WmResponse(reqEx.RequestId, HttpStatusCode.BadRequest, reqEx.Message + " \n" + reqEx.InnerException?.Message),
+                    RequestException reqEx when reqEx.InnerException is KeyNotFoundException => new WmResponse(reqEx.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize(reqEx)),
+                    RequestException reqEx => new WmResponse(reqEx.RequestId, HttpStatusCode.BadRequest, JsonSerializer.Serialize(reqEx)),
                     _ => new WmResponse(Guid.Empty, HttpStatusCode.InternalServerError, ex.Message)
                 }
                 );
@@ -91,7 +93,11 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
 
     }
 
-    private Either<RequestException, Task<WmResponse>> FindHandler(WmRequest request) => GetMessageHandlers[request.Route](request);
+    private Either<RequestException, Task<WmResponse>> FindHandler(WmRequest request) =>
+        GetMessageHandlers.TryGetValue(request.Route, out var handler)
+        ? handler(request)
+        : RequestException.From(request.Id, new KeyNotFoundException($"No handler was registered for the route '{request.Route.Path}'"));
+
     private WmResponse SafeInvokeHandler(Task<WmResponse> handler) => handler.Result;
 }
 

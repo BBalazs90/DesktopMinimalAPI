@@ -4,6 +4,7 @@ using DesktopMinimalAPI.Extensions;
 using System.Text.Json;
 using FluentAssertions;
 using System.Net;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
 
 namespace DesktopMinimalAPI.Core.Tests;
 
@@ -63,7 +64,7 @@ public class WhenGetRequestReceived
         var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.NotFound);
         _ = response.RequestId.Should().Be(guid);
-        _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Contain(notRegisteredPath);
+        _ = response.Data.Should().Contain(notRegisteredPath);
     }
 
     [Theory]
