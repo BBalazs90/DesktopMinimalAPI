@@ -18,7 +18,7 @@ public class WhenGetRequestReceived
     }
 
     [Fact]
-    public async Task ShouldReturnOkResponseWithHandlerContentAndRequestGuid()
+    public async Task ShouldReturnOkResponseWithHandlerContentAndRequestId()
     {
         const string HandlerReturn = "Awesome, I work!";
         var handler = () => HandlerReturn;

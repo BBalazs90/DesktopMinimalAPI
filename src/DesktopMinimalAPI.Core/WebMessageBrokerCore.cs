@@ -21,10 +21,7 @@ namespace DesktopMinimalAPI;
 internal sealed class WebMessageBrokerCore : IWebMessageBroker
 {
     public readonly ICoreWebView2 CoreWebView;
-#pragma warning disable S4487 // Unread "private" fields should be removed
-    // Will be used soon.
     private readonly SynchronizationContext? _context;
-#pragma warning restore S4487 // Unread "private" fields should be removed
 
     internal WebMessageBrokerCore(ICoreWebView2 coreWebView)
     {

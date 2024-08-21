@@ -1,6 +1,7 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Dtos;
 using DesktopMinimalAPI.Core.RequestHandling.Models.Methods;
 using DesktopMinimalAPI.Models;
 using LanguageExt.UnsafeValueAccess;
@@ -40,21 +41,21 @@ internal class CoreWebView2TestInterceptor : ICoreWebView2
 
 internal static class CoreWebView2TestInterceptorExtensions
 {
-    public static RequestId SimulateGet(this CoreWebView2TestInterceptor webView, string path, string? body = null)
+    public static Guid SimulateGet(this CoreWebView2TestInterceptor webView, string path, string? body = null)
     {
-        var requestId = RequestId.From(Guid.NewGuid().ToString()).ValueUnsafe();
-        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequest(requestId, Method.Parse("GET").ValueUnsafe(), Route.From(path).ValueUnsafe()), Serialization.DefaultCamelCase));
+        var requestId = Guid.NewGuid();
+        webView.RaiseWebMessageReceived(BuildSerializedRequest(requestId, Method.Get, path, body));
         return requestId;
     }
 
     public static RequestId SimulatePost(this CoreWebView2TestInterceptor webView, string path)
     {
         var requestId = RequestId.From(Guid.NewGuid().ToString()).ValueUnsafe();
-        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequest(requestId, Method.Parse("POST").ValueUnsafe(), Route.From(path).ValueUnsafe()), Serialization.DefaultCamelCase));
+        webView.RaiseWebMessageReceived(BuildSerializedRequest(requestId, Method.Post, path));
         return requestId;
     }
 
-    public static WmResponse ReadLastResponse(this CoreWebView2TestInterceptor webView) => 
+    public static WmResponse ReadLastResponse(this CoreWebView2TestInterceptor webView) =>
         JsonSerializer.Deserialize<WmResponse>(webView.LastPostedWebMessageAsString, Serialization.DefaultCamelCase)
         ?? throw new InvalidOperationException($"Could not deserialize the last webmessage. Its content: '{webView.LastPostedWebMessageAsString}'");
 
@@ -64,4 +65,14 @@ internal static class CoreWebView2TestInterceptorExtensions
         return JsonSerializer.Deserialize<WmResponse>(webView.LastPostedWebMessageAsString, Serialization.DefaultCamelCase)
         ?? throw new InvalidOperationException($"Could not deserialize the last webmessage. Its content: '{webView.LastPostedWebMessageAsString}'");
     }
+
+    private static string BuildSerializedRequest(Guid requestId, Method method, string path, string? body = null) =>
+        JsonSerializer.Serialize(new WmRequestDto()
+        {
+            RequestId = requestId.ToString(),
+            Method = method.ToString(),
+            Path = path,
+            Body = body
+        },
+        Serialization.DefaultCamelCase);
 }

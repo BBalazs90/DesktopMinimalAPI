@@ -1,13 +1,8 @@
 ﻿using LanguageExt;
-using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace DesktopMinimalAPI.Core.RequestHandling.Models.Methods;
 
-[JsonConverter(typeof(MethodsJsonConverter))]
 public abstract class Method
 {
     public static readonly Get Get = new();
@@ -20,17 +15,4 @@ public abstract class Method
             "POST" => Post,
             _ => Option<Method>.None
         };
-}
-
-public class MethodsJsonConverter : JsonConverter<Method>
-{
-    public override Method Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-        reader.TokenType == JsonTokenType.String
-        ? Method.Parse(reader.GetString()).IfNone(() => throw new JsonException("The provided JSON does not contain a valid method type."))
-        : throw new ArgumentException($"Expected token: {JsonTokenType.String}, got {reader.TokenType}");
-
-    [SuppressMessage("Usage", "CA1062: Validate arguments of public methods",
-        Justification = "This method is only used by the JSON serializer framework, it guarantees the non-null writer.")]
-    public override void Write(Utf8JsonWriter writer, Method value, JsonSerializerOptions options) =>
-        writer.WriteStringValue(value?.ToString() ?? throw new ArgumentNullException(nameof(value)));
 }

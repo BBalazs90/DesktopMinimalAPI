@@ -18,6 +18,8 @@ public readonly record struct RequestId
 
     public Guid Value { get; }
 
+    public override string ToString() => Value.ToString();
+
     public Guid ToGuid() => Value;
     public static implicit operator Guid(RequestId requestId) => requestId.ToGuid();
 }
