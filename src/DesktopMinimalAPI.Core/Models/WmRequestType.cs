@@ -1,7 +1,7 @@
-﻿using DesktopMinimalAPI.Core.Models.Dtos;
-using DesktopMinimalAPI.Core.Models.Exceptions;
-using DesktopMinimalAPI.Core.Models.Methods;
-using DesktopMinimalAPI.Core.RequestHandling;
+﻿using DesktopMinimalAPI.Core.RequestHandling;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Dtos;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Methods;
 using LanguageExt;
 using LanguageExt.Pipes;
 using System;

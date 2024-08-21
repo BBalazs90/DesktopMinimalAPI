@@ -1,7 +1,7 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Models;
-using DesktopMinimalAPI.Core.Models.Exceptions;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
 using System;

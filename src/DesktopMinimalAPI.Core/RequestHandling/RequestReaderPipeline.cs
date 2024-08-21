@@ -1,6 +1,6 @@
 ﻿using DesktopMinimalAPI.Core.Configuration;
-using DesktopMinimalAPI.Core.Models.Dtos;
-using DesktopMinimalAPI.Core.Models.Exceptions;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Dtos;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
 using Microsoft.Web.WebView2.Core;

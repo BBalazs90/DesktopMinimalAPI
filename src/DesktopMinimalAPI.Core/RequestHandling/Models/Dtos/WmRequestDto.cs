@@ -1,4 +1,4 @@
-﻿namespace DesktopMinimalAPI.Core.Models.Dtos;
+﻿namespace DesktopMinimalAPI.Core.RequestHandling.Models.Dtos;
 internal sealed class WmRequestDto
 {
     public string? RequestId { get; set; }

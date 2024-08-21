@@ -1,6 +1,6 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
-using DesktopMinimalAPI.Core.Models.Methods;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Methods;
 using DesktopMinimalAPI.Models;
 using LanguageExt.UnsafeValueAccess;
 using System.Text.Json;
