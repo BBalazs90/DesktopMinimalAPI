@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Features.HandlerRegistration;
 using DesktopMinimalAPI.Core.Models;
+using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
 using static DesktopMinimalAPI.Core.HandlerPipeline;
 using static DesktopMinimalAPI.Core.RoutePipeline;
@@ -14,7 +15,7 @@ namespace DesktopMinimalAPI.Extensions;
     Justification = "These are extensions methods, it is guranteed that the extended object will not be null.")]
 public static class HandlerBuilderExtensions
 {
-    private static Func<T, HandlerBuilderBase> ApplyRoute<T>(string route, Func<IRoute, T, HandlerBuilderBase> f) =>
+    private static Func<T, HandlerBuilderBase> ApplyRoute<T>(string route, Func<Route, T, HandlerBuilderBase> f) =>
         (T handler) => f(GetRoot(route), handler);
 
     public static HandlerBuilderBase MapGet<TOut>(this HandlerBuilderBase builder, string route, Func<TOut> handler) =>

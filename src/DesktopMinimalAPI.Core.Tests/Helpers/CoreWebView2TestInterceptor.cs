@@ -1,5 +1,6 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
+using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models.Methods;
 using DesktopMinimalAPI.Models;
 using LanguageExt.UnsafeValueAccess;
@@ -42,14 +43,14 @@ internal static class CoreWebView2TestInterceptorExtensions
     public static Guid SimulateGet(this CoreWebView2TestInterceptor webView, string path, string? body = null)
     {
         var guid = Guid.NewGuid();
-        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequestType(guid, Method.Parse("GET").ValueUnsafe(), path), Serialization.DefaultCamelCase));
+        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequestType(guid, Method.Parse("GET").ValueUnsafe(), Route.From(path).ValueUnsafe()), Serialization.DefaultCamelCase));
         return guid;
     }
 
     public static Guid SimulatePost(this CoreWebView2TestInterceptor webView, string path)
     {
         var guid = Guid.NewGuid();
-        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequestType(guid, Method.Parse("POST").ValueUnsafe(), path), Serialization.DefaultCamelCase));
+        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequestType(guid, Method.Parse("POST").ValueUnsafe(), Route.From(path).ValueUnsafe()), Serialization.DefaultCamelCase));
         return guid;
     }
 

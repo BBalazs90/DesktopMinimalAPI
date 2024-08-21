@@ -10,7 +10,7 @@ internal static class RequestTransformerPipeline
             original.Id,
             original.Method,
             RoutePipeline
-                .GetParameters(original.Path)
+                .GetParameters(original.Route.Path)
                 .Select(nameValue => new RequestParameterIntermediate(nameValue.Name, nameValue.Value))
                 //.Append(new RequestParameterIntermediate("body", original.Body))
                 .ToImmutableArray());

@@ -1,6 +1,7 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Models;
+using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
@@ -32,8 +33,8 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
         _context = SynchronizationContext.Current;
     }
 
-    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> GetMessageHandlers { get; init; }
-    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> PostMessageHandlers { get; init; }
+    internal required ImmutableDictionary<Route, Func<TransformedWmRequest, Task<WmResponse>>> GetMessageHandlers { get; init; }
+    internal required ImmutableDictionary<Route, Func<TransformedWmRequest, Task<WmResponse>>> PostMessageHandlers { get; init; }
 
     internal void OnWebMessageReceived(object? sender, EventArgs e) => StartRequestProcessingPipeline(e);
 

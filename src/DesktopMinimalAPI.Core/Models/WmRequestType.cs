@@ -1,4 +1,5 @@
 ﻿using DesktopMinimalAPI.Core.RequestHandling;
+using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models.Dtos;
 using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
 using DesktopMinimalAPI.Core.RequestHandling.Models.Methods;
@@ -26,7 +27,7 @@ internal static class WmRequestBuilder
     //}
 }
 
-public record WmRequestType(Guid Id, Method Method, string Path);
+public record WmRequestType(Guid Id, Method Method, Route Route);
 
 internal static class WmRequest
 {
@@ -36,5 +37,6 @@ internal static class WmRequest
 
     static Either<RequestException, WmRequestType> With(Guid requestId, WmRequestDto dto) =>
          from method in Method.Parse(dto.Method).ToEither(RequestWithValidGuidException.From(requestId, new ArgumentException(nameof(dto.Method))) as RequestException)
-         select new WmRequestType(requestId, method, dto.Path);
+         from route in Route.From(dto.Path).ToEither(RequestWithValidGuidException.From(requestId, new ArgumentException(nameof(dto.Path))) as RequestException)
+         select new WmRequestType(requestId, method, route);
 }
