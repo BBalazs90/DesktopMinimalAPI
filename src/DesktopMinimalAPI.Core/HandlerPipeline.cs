@@ -50,10 +50,9 @@ internal static class HandlerPipeline
       {
           try
           {
-              throw new NotImplementedException();
-              //var p1 = TryGetParameter<TIn>(request.ParameterInfos[0], options);
-              //var result = handler(p1);
-              //return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
+              var p1 = TryGetParameter<TIn>(request.Route.Parameters[0], options);
+              var result = handler(p1);
+              return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
           }
           catch (Exception ex)
           {
@@ -130,30 +129,30 @@ internal static class HandlerPipeline
           }
       };
 
-    //private static T? TryGetParameter<T>(RequestParameterIntermediate parameter, JsonSerializerOptions? options = null)
-    //{
-    //    try
-    //    {
-    //        return typeof(T).IsAssignableTo(typeof(IConvertible))
-    //            ? (T)Convert.ChangeType(parameter.SerializedParameter, typeof(T), CultureInfo.InvariantCulture)
-    //            : JsonSerializer.Deserialize<T>(parameter.SerializedParameter, options ?? Serialization.DefaultCamelCase) ?? default;
-    //    }
-    //    catch (InvalidCastException)
-    //    {
-    //        return default;
-    //    }
-    //    catch (FormatException)
-    //    {
-    //        return default;
-    //    }
-    //    catch (ArgumentNullException)
-    //    {
-    //        return default;
-    //    }
-    //    catch (JsonException)
-    //    {
-    //        return default;
-    //    }
-    //}
+    private static T? TryGetParameter<T>(string parameter, JsonSerializerOptions? options = null)
+    {
+        try
+        {
+            return typeof(T).IsAssignableTo(typeof(IConvertible))
+                ? (T)Convert.ChangeType(parameter, typeof(T), CultureInfo.InvariantCulture)
+                : JsonSerializer.Deserialize<T>(parameter, options ?? Serialization.DefaultCamelCase) ?? default;
+        }
+        catch (InvalidCastException)
+        {
+            return default;
+        }
+        catch (FormatException)
+        {
+            return default;
+        }
+        catch (ArgumentNullException)
+        {
+            return default;
+        }
+        catch (JsonException)
+        {
+            return default;
+        }
+    }
 }
 
