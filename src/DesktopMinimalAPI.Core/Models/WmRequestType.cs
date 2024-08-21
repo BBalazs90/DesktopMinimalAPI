@@ -1,6 +1,7 @@
 ﻿using DesktopMinimalAPI.Core.Models.Dtos;
 using DesktopMinimalAPI.Core.Models.Exceptions;
 using DesktopMinimalAPI.Core.Models.Methods;
+using DesktopMinimalAPI.Core.RequestHandling;
 using LanguageExt;
 using LanguageExt.Pipes;
 using System;
@@ -10,29 +11,30 @@ namespace DesktopMinimalAPI.Models;
 
 internal static class WmRequestBuilder
 {
-    public static WmRequestType BuildFrom(WmRequestDto? requestDto)
-    {
-        ArgumentNullException.ThrowIfNull(requestDto);
+    //public static WmRequestType BuildFrom(WmRequestDto? requestDto)
+    //{
+    //    ArgumentNullException.ThrowIfNull(requestDto);
 
-        _ = Guid.TryParse(requestDto.RequestId, out var requestId)
-            && requestId != Guid.Empty
-            ? requestId
-            : throw new ArgumentException(nameof(requestDto.RequestId));
-        var method = (Method)requestDto.Method;
-        var path = !string.IsNullOrWhiteSpace(requestDto.Path) ? requestDto.Path : throw new ArgumentNullException(nameof(requestDto));
+    //    _ = Guid.TryParse(requestDto.RequestId, out var requestId)
+    //        && requestId != Guid.Empty
+    //        ? requestId
+    //        : throw new ArgumentException(nameof(requestDto.RequestId));
+    //    var method = (Method)requestDto.Method;
+    //    var path = !string.IsNullOrWhiteSpace(requestDto.Path) ? requestDto.Path : throw new ArgumentNullException(nameof(requestDto));
 
-        return new WmRequestType(requestId, method, path, requestDto.Body);
-    }
+    //    return new WmRequestType(requestId, method, path, requestDto.Body);
+    //}
 }
 
-public record WmRequestType(Guid RequestId, Method Method, string Path, string? Body = null);
+public record WmRequestType(Guid Id, Method Method, string Path);
 
 internal static class WmRequest
 {
-    public static Either<Exception, WmRequestType> From(WmRequestDto dto) => new WmRequestType(Guid.Parse(dto.RequestId), (Method)dto.Method, dto.Path, dto.Body);
-        
+    public static Either<RequestException, WmRequestType> From(WmRequestDto dto) =>
+        GuidParser.Parse(dto.RequestId).ToEither(RequestException.From(new ArgumentException(nameof(dto.RequestId))))
+        .Bind(guid => With(guid, dto));
 
-    private static WmRequestType Create(Guid id, Method method, string path) => new(id, method, path);
-
+    static Either<RequestException, WmRequestType> With(Guid requestId, WmRequestDto dto) =>
+         from method in Method.Parse(dto.Method).ToEither(RequestWithValidGuidException.From(requestId, new ArgumentException(nameof(dto.Method))) as RequestException)
+         select new WmRequestType(requestId, method, dto.Path);
 }
-

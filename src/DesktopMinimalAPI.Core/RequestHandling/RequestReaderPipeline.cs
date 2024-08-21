@@ -12,7 +12,7 @@ namespace DesktopMinimalAPI.Core.RequestHandling;
 
 internal static class RequestReaderPipeline
 {
-    public static Either<Exception, WmRequestType> DecodeRequest(EventArgs e) =>
+    public static Either<RequestException, WmRequestType> DecodeRequest(EventArgs e) =>
             new Try<WmRequestDto>(() => JsonSerializer.Deserialize<WmRequestDto>(GetWebMessageAsString(e), Serialization.DefaultCamelCase))
         .Match(Succ: WmRequest.From, Fail: ex => RequestException.From(ex));
 
@@ -53,24 +53,4 @@ internal static class RequestReaderPipeline
 #else
         ((CoreWebView2WebMessageReceivedEventArgs)e).WebMessageAsJson;
 #endif
-
-    private static bool TryGetRequestId(EventArgs e, out Guid requestId)
-    {
-        try
-        {
-            var guidPart = JsonSerializer.Deserialize<GuidPartOfRequest>(GetWebMessageAsString(e), Serialization.DefaultCamelCase);
-            requestId = guidPart is null ? Guid.Empty : guidPart.RequestId;
-            return guidPart is not null;
-        }
-        catch (JsonException)
-        {
-            requestId = Guid.Empty;
-            return false;
-        }
-    }
-
-    class GuidPartOfRequest(Guid requestId)
-    {
-        public Guid RequestId { get; } = requestId;
-    }
 }

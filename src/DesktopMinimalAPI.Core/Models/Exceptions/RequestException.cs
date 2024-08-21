@@ -8,7 +8,18 @@ namespace DesktopMinimalAPI.Core.Models.Exceptions;
     "an inner exception describing what went wrong during the request processing.")]
 public class RequestException : Exception
 {
-    private RequestException(string message, Exception innerException) : base(message, innerException) { }
+    protected RequestException(string message, Exception innerException) : base(message, innerException) { }
 
     public static RequestException From(Exception ex) => new("Invalid request! See inner exception for details.", ex);
+}
+
+public class RequestWithValidGuidException : RequestException
+{
+    private RequestWithValidGuidException(Guid requestId, string message, Exception innerException) : base(message, innerException) =>
+        RequestId = requestId;
+
+    public static RequestWithValidGuidException From(Guid requestId, Exception ex) => 
+        new(requestId, "Invalid request! See inner exception for details.", ex);
+
+    public Guid RequestId { get; }
 }
