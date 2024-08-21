@@ -1,5 +1,6 @@
 ﻿using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Models;
+using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -16,7 +17,7 @@ namespace DesktopMinimalAPI.Core;
     "must be cached and returned to the requestor.")]
 internal static class HandlerPipeline
 {
-    internal static Func<TransformedWmRequest, WmResponse> Transform<T>(Func<T> handler, JsonSerializerOptions? options = null) =>
+    internal static Func<WmRequest, WmResponse> Transform<T>(Func<T> handler, JsonSerializerOptions? options = null) =>
       (request) =>
       {
           try
@@ -44,14 +45,15 @@ internal static class HandlerPipeline
     //      }
     //  };
 
-    public static Func<TransformedWmRequest, WmResponse> Transform<TIn, TOut>(Func<TIn, TOut> handler, JsonSerializerOptions? options = null) =>
+    public static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<TIn, TOut> handler, JsonSerializerOptions? options = null) =>
       (request) =>
       {
           try
           {
-              var p1 = TryGetParameter<TIn>(request.ParameterInfos[0], options);
-              var result = handler(p1);
-              return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
+              throw new NotImplementedException();
+              //var p1 = TryGetParameter<TIn>(request.ParameterInfos[0], options);
+              //var result = handler(p1);
+              //return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
           }
           catch (Exception ex)
           {
@@ -59,15 +61,16 @@ internal static class HandlerPipeline
           }
       };
 
-    public static Func<TransformedWmRequest, WmResponse> Transform<TIn1, TIn2, TOut>(Func<TIn1, TIn2, TOut> handler, JsonSerializerOptions? options = null) =>
+    public static Func<WmRequest, WmResponse> Transform<TIn1, TIn2, TOut>(Func<TIn1, TIn2, TOut> handler, JsonSerializerOptions? options = null) =>
       (request) =>
       {
           try
           {
-              var p1 = TryGetParameter<TIn1>(request.ParameterInfos[0], options);
-              var p2 = TryGetParameter<TIn2>(request.ParameterInfos[1], options);
-              var result = handler(p1, p2);
-              return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
+              throw new NotImplementedException();
+              //var p1 = TryGetParameter<TIn1>(request.ParameterInfos[0], options);
+              //var p2 = TryGetParameter<TIn2>(request.ParameterInfos[1], options);
+              //var result = handler(p1, p2);
+              //return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
           }
           catch (Exception ex)
           {
@@ -75,16 +78,17 @@ internal static class HandlerPipeline
           }
       };
 
-    public static Func<TransformedWmRequest, WmResponse> Transform<TIn1, TIn2, TIn3, TOut>(Func<TIn1, TIn2, TIn3, TOut> handler, JsonSerializerOptions? options = null) =>
+    public static Func<WmRequest, WmResponse> Transform<TIn1, TIn2, TIn3, TOut>(Func<TIn1, TIn2, TIn3, TOut> handler, JsonSerializerOptions? options = null) =>
      (request) =>
      {
          try
          {
-             var p1 = TryGetParameter<TIn1>(request.ParameterInfos[0], options);
-             var p2 = TryGetParameter<TIn2>(request.ParameterInfos[1], options);
-             var p3 = TryGetParameter<TIn3>(request.ParameterInfos[2], options);
-             var result = handler(p1, p2, p3);
-             return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
+             throw new NotImplementedException();
+             //var p1 = TryGetParameter<TIn1>(request.ParameterInfos[0], options);
+             //var p2 = TryGetParameter<TIn2>(request.ParameterInfos[1], options);
+             //var p3 = TryGetParameter<TIn3>(request.ParameterInfos[2], options);
+             //var result = handler(p1, p2, p3);
+             //return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
          }
          catch (Exception ex)
          {
@@ -92,7 +96,7 @@ internal static class HandlerPipeline
          }
      };
 
-    public static Func<TransformedWmRequest, Task<WmResponse>> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
+    public static Func<WmRequest, Task<WmResponse>> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
       (request) =>
       {
           try
@@ -108,16 +112,17 @@ internal static class HandlerPipeline
           }
       };
 
-    public static Func<TransformedWmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<TIn, Task<TOut>> handler, JsonSerializerOptions? options = null) =>
+    public static Func<WmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<TIn, Task<TOut>> handler, JsonSerializerOptions? options = null) =>
       (request) =>
       {
           try
           {
-              var p1 = TryGetParameter<TIn>(request.ParameterInfos[0], options);
-              var result = handler(p1);
-              return result
-              .ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
-              TaskScheduler.Current);
+              throw new NotImplementedException();
+              //var p1 = TryGetParameter<TIn>(request.ParameterInfos[0], options);
+              //var result = handler(p1);
+              //return result
+              //.ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
+              //TaskScheduler.Current);
           }
           catch (Exception ex)
           {

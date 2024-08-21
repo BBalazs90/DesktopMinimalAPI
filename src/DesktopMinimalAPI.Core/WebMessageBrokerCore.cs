@@ -30,8 +30,8 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
         _context = SynchronizationContext.Current;
     }
 
-    internal required ImmutableDictionary<Route, Func<TransformedWmRequest, Task<WmResponse>>> GetMessageHandlers { get; init; }
-    internal required ImmutableDictionary<Route, Func<TransformedWmRequest, Task<WmResponse>>> PostMessageHandlers { get; init; }
+    internal required ImmutableDictionary<Route, Func<WmRequest, Task<WmResponse>>> GetMessageHandlers { get; init; }
+    internal required ImmutableDictionary<Route, Func<WmRequest, Task<WmResponse>>> PostMessageHandlers { get; init; }
 
     internal void OnWebMessageReceived(object? sender, EventArgs e) => StartRequestProcessingPipeline(e);
 
@@ -91,7 +91,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
 
     }
 
-    private Either<RequestException, Func<WmResponse>> FindHandler(WmRequest request) => new Func<WmResponse>(() => new WmResponse(request.Id, HttpStatusCode.OK, "\"Awesome, I work!\""));
-    private WmResponse SafeInvokeHandler(Func<WmResponse> handler) => handler.Invoke();
+    private Either<RequestException, Task<WmResponse>> FindHandler(WmRequest request) => GetMessageHandlers[request.Route](request);
+    private WmResponse SafeInvokeHandler(Task<WmResponse> handler) => handler.Result;
 }
 
