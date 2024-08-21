@@ -47,8 +47,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
                 Right: response => response,
                 Left: ex => ex switch
                 {
-                    RequestWithValidGuidException reqEx => new WmResponse(reqEx.RequestId, HttpStatusCode.BadRequest, reqEx.Message + " \n" + reqEx.InnerException?.Message),
-                    RequestException reqEx => new WmResponse(Guid.Empty, HttpStatusCode.BadRequest, reqEx.Message + " \n" + reqEx.InnerException?.Message),
+                    RequestException reqEx => new WmResponse(reqEx.RequestId, HttpStatusCode.BadRequest, reqEx.Message + " \n" + reqEx.InnerException?.Message),
                     _ => new WmResponse(Guid.Empty, HttpStatusCode.InternalServerError, ex.Message)
                 }
                 );
@@ -95,7 +94,7 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
 
     }
 
-    private Either<RequestException, Func<WmResponse>> FindHandler(WmRequestType request) => new Func<WmResponse>(() => new WmResponse(request.Id, HttpStatusCode.OK, "\"Awesome, I work!\""));
+    private Either<RequestException, Func<WmResponse>> FindHandler(WmRequest request) => new Func<WmResponse>(() => new WmResponse(request.Id, HttpStatusCode.OK, "\"Awesome, I work!\""));
     private WmResponse SafeInvokeHandler(Func<WmResponse> handler) => handler.Invoke();
 }
 

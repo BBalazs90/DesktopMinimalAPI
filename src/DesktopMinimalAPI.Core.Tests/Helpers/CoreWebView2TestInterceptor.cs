@@ -40,18 +40,18 @@ internal class CoreWebView2TestInterceptor : ICoreWebView2
 
 internal static class CoreWebView2TestInterceptorExtensions
 {
-    public static Guid SimulateGet(this CoreWebView2TestInterceptor webView, string path, string? body = null)
+    public static RequestId SimulateGet(this CoreWebView2TestInterceptor webView, string path, string? body = null)
     {
-        var guid = Guid.NewGuid();
-        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequestType(guid, Method.Parse("GET").ValueUnsafe(), Route.From(path).ValueUnsafe()), Serialization.DefaultCamelCase));
-        return guid;
+        var requestId = RequestId.From(Guid.NewGuid().ToString()).ValueUnsafe();
+        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequest(requestId, Method.Parse("GET").ValueUnsafe(), Route.From(path).ValueUnsafe()), Serialization.DefaultCamelCase));
+        return requestId;
     }
 
-    public static Guid SimulatePost(this CoreWebView2TestInterceptor webView, string path)
+    public static RequestId SimulatePost(this CoreWebView2TestInterceptor webView, string path)
     {
-        var guid = Guid.NewGuid();
-        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequestType(guid, Method.Parse("POST").ValueUnsafe(), Route.From(path).ValueUnsafe()), Serialization.DefaultCamelCase));
-        return guid;
+        var requestId = RequestId.From(Guid.NewGuid().ToString()).ValueUnsafe();
+        webView.RaiseWebMessageReceived(JsonSerializer.Serialize(new WmRequest(requestId, Method.Parse("POST").ValueUnsafe(), Route.From(path).ValueUnsafe()), Serialization.DefaultCamelCase));
+        return requestId;
     }
 
     public static WmResponse ReadLastResponse(this CoreWebView2TestInterceptor webView) => 
