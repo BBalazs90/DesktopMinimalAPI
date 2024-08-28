@@ -1,24 +1,31 @@
-﻿using LanguageExt;
+﻿using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
+using LanguageExt;
 using System;
 using System.Collections.Immutable;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Web;
 
 namespace DesktopMinimalAPI.Core.RequestHandling.Models;
-public sealed class Route : IEquatable<Route>
-{
-    public static Option<Route> From(string? maybeRoute) => maybeRoute is not null && maybeRoute.StartsWith('/')
-        ? new Route(GetPath(maybeRoute), GetParameters(maybeRoute))
-        : Option<Route>.None;
 
-    static PathString GetPath(string route) => route.Contains('?', StringComparison.Ordinal)
-        ? new(string.Concat(route.TakeWhile(c => c != '?')))
-        : new(route);
-    static ImmutableArray<UrlParameterString> GetParameters(string route) => route.Contains('?', StringComparison.Ordinal)
-        ? route.Split('?')[1]
-        .Split('&')
-        .Aggregate(ImmutableArray<UrlParameterString>.Empty, (accu, paramPart) => accu.Add(new(paramPart.Split('=')[1])))
-        : [];
+
+public readonly struct Route : IEquatable<Route>
+{
+    public static Either<ArgumentException, Route> From(string? maybeRoute) =>
+        from path in GetPath(maybeRoute)
+        from parameters in GetParameters(maybeRoute![path.Value.Length..]) // By this time GetPath would have failed if maybeRoute is null, ok to use !
+        select new Route(path, parameters);
+
+    static Either<ArgumentException, PathString> GetPath(string? maybeRoute) => maybeRoute switch
+    {
+        string maybeRouteNotNull when maybeRouteNotNull.StartsWith('/') && maybeRouteNotNull.Contains('?', StringComparison.Ordinal) =>
+            new PathString(string.Concat(maybeRouteNotNull.TakeWhile(c => c != '?'))),
+
+        string maybeRouteNotNull when maybeRouteNotNull.StartsWith('/') => new PathString(maybeRouteNotNull),
+
+        _ => new ArgumentException($"Valid route must be not null, not whitespace and start with '/'. Got '{maybeRoute}'", nameof(maybeRoute))
+    };
 
     private Route(PathString path, ImmutableArray<UrlParameterString> parameters) =>
         (Path, Parameters) = (path, parameters);
@@ -31,7 +38,7 @@ public sealed class Route : IEquatable<Route>
 
     public override bool Equals(object? obj) => obj is Route route && Equals(route);
 
-    public bool Equals(Route? other) => Path.Equals(other?.Path);
+    public bool Equals(Route other) => Path.Equals(other.Path);
 }
 
 public readonly record struct PathString(string Value)

@@ -45,8 +45,8 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
                 Right: response => response,
                 Left: ex => ex switch
                 {
-                    RequestException reqEx when reqEx.InnerException is KeyNotFoundException => new WmResponse(reqEx.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize(reqEx)),
-                    RequestException reqEx => new WmResponse(reqEx.RequestId, HttpStatusCode.BadRequest, JsonSerializer.Serialize(reqEx)),
+                    RequestException reqEx when reqEx.InnerException is KeyNotFoundException => new WmResponse(reqEx.RequestId, HttpStatusCode.NotFound, string.Join(' ', reqEx.Message, reqEx.InnerException?.Message)),
+                    RequestException reqEx => new WmResponse(reqEx.RequestId, HttpStatusCode.BadRequest, string.Join(' ', reqEx.Message, reqEx.InnerException?.Message)),
                     _ => new WmResponse(Guid.Empty, HttpStatusCode.InternalServerError, ex.Message)
                 }
                 );

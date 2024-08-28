@@ -8,7 +8,7 @@ using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
 
 namespace DesktopMinimalAPI.Core.Tests;
 
-public class WhenGetRequestReceived
+public sealed class WhenGetRequestReceived
 {
     private readonly WebMessageBrokerBuilderForTest _builder;
     private const string _testPath = "/test";

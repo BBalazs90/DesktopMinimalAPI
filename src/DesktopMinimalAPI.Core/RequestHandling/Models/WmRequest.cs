@@ -14,7 +14,7 @@ public record WmRequest(RequestId Id, Method Method, Route Route)
        .Bind(guid => WithId(guid, dto));
 
     static Either<RequestException, WmRequest> WithId(RequestId requestId, WmRequestDto dto) =>
-         from method in Method.Parse(dto.Method).ToEither(() => RequestException.From(requestId, new ArgumentException(nameof(dto.Method))))
-         from route in Route.From(dto.Path).ToEither(() => RequestException.From(requestId, new ArgumentException(nameof(dto.Path))))
+         from method in Method.Parse(dto.Method).ToEither(() => RequestException.FromArgumentException(requestId, nameof(dto.Method)))
+         from route in Route.From(dto.Path).MapLeft(argumentEx => RequestException.From(requestId, argumentEx))
          select new WmRequest(requestId, method, route);
 }

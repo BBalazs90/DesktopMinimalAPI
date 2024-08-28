@@ -6,7 +6,7 @@ using System.Text.Json;
 using DesktopMinimalAPI.Extensions;
 
 namespace DesktopMinimalAPI.Core.Tests;
-public class WhenPostRequestReceived
+public sealed class WhenPostRequestReceived
 {
     private readonly WebMessageBrokerBuilderForTest _builder;
     private const string _testPath = "/test";

@@ -10,14 +10,16 @@ public class RequestException : Exception
 {
     public Guid RequestId { get; } = Guid.Empty;
 
-    private  RequestException(string message, Exception innerException) 
-        : base(message, innerException) { }
-    private RequestException(RequestId requestId, string message, Exception innerException) 
-        : base(message, innerException) 
-        => RequestId = requestId;
+    private  RequestException(string message, Exception innerException) : 
+        base(message, innerException) { }
+    private RequestException(RequestId requestId, string message, Exception innerException) :
+        base(message, innerException) => 
+        RequestId = requestId;
 
-    public static RequestException From(Exception ex) 
-        => new("Invalid request! See inner exception for details.", ex);
-    public static RequestException From(RequestId requestId, Exception ex) 
-        => new(requestId, "Invalid request! See inner exception for details.", ex);
+    public static RequestException From(Exception ex) => 
+        new("Invalid request! See inner exception for details.", ex);
+    public static RequestException From(RequestId requestId, Exception ex) =>
+        new(requestId, "Invalid request! See inner exception for details.", ex);
+    public static RequestException FromArgumentException(RequestId requestId, string argumentName, string? message = null) =>
+       new(requestId, "Invalid request! See inner exception for details.", new ArgumentException(message, argumentName));
 }

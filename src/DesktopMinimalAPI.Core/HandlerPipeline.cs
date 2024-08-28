@@ -65,11 +65,10 @@ internal static class HandlerPipeline
       {
           try
           {
-              throw new NotImplementedException();
-              //var p1 = TryGetParameter<TIn1>(request.ParameterInfos[0], options);
-              //var p2 = TryGetParameter<TIn2>(request.ParameterInfos[1], options);
-              //var result = handler(p1, p2);
-              //return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
+              var p1 = TryGetParameter<TIn1>(request.Route.Parameters[0], options);
+              var p2 = TryGetParameter<TIn2>(request.Route.Parameters[1], options);
+              var result = handler(p1, p2);
+              return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
           }
           catch (Exception ex)
           {
@@ -82,12 +81,11 @@ internal static class HandlerPipeline
      {
          try
          {
-             throw new NotImplementedException();
-             //var p1 = TryGetParameter<TIn1>(request.ParameterInfos[0], options);
-             //var p2 = TryGetParameter<TIn2>(request.ParameterInfos[1], options);
-             //var p3 = TryGetParameter<TIn3>(request.ParameterInfos[2], options);
-             //var result = handler(p1, p2, p3);
-             //return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
+             var p1 = TryGetParameter<TIn1>(request.Route.Parameters[0], options);
+             var p2 = TryGetParameter<TIn2>(request.Route.Parameters[1], options);
+             var p3 = TryGetParameter<TIn3>(request.Route.Parameters[2], options);
+             var result = handler(p1, p2, p3);
+             return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
          }
          catch (Exception ex)
          {
