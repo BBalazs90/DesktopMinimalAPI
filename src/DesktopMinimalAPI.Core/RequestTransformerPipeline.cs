@@ -1,7 +1,10 @@
-﻿using DesktopMinimalAPI.Core.Models;
+﻿using DesktopMinimalAPI.Core.Configuration;
+using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Models;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Text.Json;
 
 namespace DesktopMinimalAPI.Core;
 internal static class RequestTransformerPipeline
@@ -12,6 +15,26 @@ internal static class RequestTransformerPipeline
             RoutePipeline
                 .GetParameters(original.Path)
                 .Select(nameValue => new RequestParameterIntermediate(nameValue.Name, nameValue.Value))
-                .Append(new RequestParameterIntermediate("body", original.Body))
-                .ToImmutableArray());
+                .ToImmutableArray()
+                .AddRange(GetParametersFromBody(original.Body)));
+
+    private static ImmutableArray<RequestParameterIntermediate> GetParametersFromBody(string? body)
+    {
+        if (body is null)
+        {
+            return [];
+        }
+
+        try
+        {
+            var parameters = JsonSerializer.Deserialize<Dictionary<string, string>>(body, Serialization.DefaultCamelCase) ?? [];
+            return parameters
+                .Select(nameValue => new RequestParameterIntermediate(nameValue.Key, nameValue.Value))
+                .ToImmutableArray();
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
 }
