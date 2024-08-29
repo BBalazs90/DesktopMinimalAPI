@@ -13,7 +13,7 @@ namespace DesktopMinimalAPI.Core.RequestHandling;
 internal static class RequestReaderPipeline
 {
     public static Either<RequestException, WmRequest> DecodeRequest(EventArgs e) =>
-            new Try<WmRequestDto>(() => JsonSerializer.Deserialize<WmRequestDto>(GetWebMessageAsString(e), Serialization.DefaultCamelCase))
+            new Try<WmRequestDto>(() => JsonSerializer.Deserialize<WmRequestDto>(GetWebMessageAsString(e), Serialization.DefaultCamelCase) ?? throw new JsonException($"Could not deserialize {nameof(WmRequestDto)}"))
         .Match(Succ: WmRequest.From, Fail: ex => RequestException.From(ex));
 
 

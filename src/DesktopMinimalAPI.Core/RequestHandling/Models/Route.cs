@@ -27,6 +27,16 @@ public readonly struct Route : IEquatable<Route>
         _ => new ArgumentException($"Valid route must be not null, not whitespace and start with '/'. Got '{maybeRoute}'", nameof(maybeRoute))
     };
 
+    static Either<ArgumentException, ImmutableArray<UrlParameterString>> GetParameters(string maybeRoute) => maybeRoute switch
+    {
+        _ when maybeRoute.Length > 0 => maybeRoute
+            .Split('&')
+            .Select(strPart => new UrlParameterString(string.Join(string.Empty, strPart.SkipWhile(c => c != '=').Skip(1))))
+            .ToImmutableArray(),
+        _ => []
+    };
+       
+
     private Route(PathString path, ImmutableArray<UrlParameterString> parameters) =>
         (Path, Parameters) = (path, parameters);
 
