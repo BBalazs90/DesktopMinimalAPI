@@ -129,16 +129,45 @@ internal static class HandlerPipeline
       {
           try
           {
-              throw new NotImplementedException();
-              //var p1 = TryGetParameter<TIn>(request.ParameterInfos[0], options);
-              //var result = handler(p1);
-              //return result
-              //.ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
-              //TaskScheduler.Current);
+              var p1 = request.Route.Parameters.Any()
+              ? TryGetParameter<TIn>(request.Route.Parameters[0], options)
+              : JsonSerializer.Deserialize<TIn>(request.Body.ValueUnsafe().Value, options ?? Serialization.DefaultCamelCase);
+              var result = handler(p1);
+              return result
+              .ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
+              TaskScheduler.Current);
           }
           catch (Exception ex)
           {
               return Task.FromResult(new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
+          }
+      };
+
+    public static Func<WmRequest, Task<WmResponse>> Transform<TIn1, TIn2, TOut>(Func<TIn1, TIn2, Task<TOut>> handler, JsonSerializerOptions? options = null) =>
+      (request) =>
+      {
+          try
+          {
+              TIn1 p1 = default;
+              TIn2 p2 = default;
+              if (request.Route.Parameters.Length == 2)
+              {
+                  (p1, p2) = (TryGetParameter<TIn1>(request.Route.Parameters[0], options), TryGetParameter<TIn2>(request.Route.Parameters[1], options));
+              }
+              else
+              {
+                  var bodyDict = JsonSerializer.Deserialize<Dictionary<string, string>>(request.Body.ValueUnsafe().Value);
+                  (p1, p2) = (TryGetParameter<TIn1>(bodyDict[bodyDict.Keys.First()], options), TryGetParameter<TIn2>(bodyDict[bodyDict.Keys.Skip(1).First()], options));
+              }
+
+              var result = handler(p1, p2);
+              return result
+              .ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
+              TaskScheduler.Current);
+          }
+          catch (Exception ex)
+          {
+              return Task.FromResult(new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase)));
           }
       };
 
