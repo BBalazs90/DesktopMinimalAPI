@@ -3,6 +3,7 @@ using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Methods;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
 using System;
@@ -93,10 +94,17 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
 
     }
 
-    private Either<RequestException, Task<WmResponse>> FindHandler(WmRequest request) =>
-        GetMessageHandlers.TryGetValue(request.Route, out var handler)
-        ? handler(request)
-        : RequestException.From(request.Id, new KeyNotFoundException($"No handler was registered for the route '{request.Route.Path}'"));
+    private Either<RequestException, Task<WmResponse>> FindHandler(WmRequest request) => request.Method switch
+    {
+        Get => GetMessageHandlers.TryGetValue(request.Route, out var handler)
+            ? handler(request)
+            : RequestException.From(request.Id, new KeyNotFoundException($"No handler was registered for the route '{request.Route.Path}'")),
+        Post => PostMessageHandlers.TryGetValue(request.Route, out var handler)
+           ? handler(request)
+           : RequestException.From(request.Id, new KeyNotFoundException($"No handler was registered for the route '{request.Route.Path}'")),
+        _ => RequestException.From(request.Id, new Exception("This cannot happen"))
+    };
+       
 
     private WmResponse SafeInvokeHandler(Task<WmResponse> handler) => handler.Result;
 }
