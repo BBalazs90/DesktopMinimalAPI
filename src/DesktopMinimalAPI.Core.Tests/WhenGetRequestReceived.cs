@@ -160,6 +160,21 @@ public sealed class WhenGetRequestReceived
         _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
 
+    [Theory]
+    [ClassData(typeof(BodyParamsData))]
+    public async Task ShouldPassBodyParamsToHandlerAndAssumeThatTheBodyIsAStringDictionary<TIn1, TIn2, TOut>(Dictionary<string, string> body, Func<TIn1, TIn2, TOut> handler, TOut expectedResult)
+    {
+        _ = _builder.MapGet(_testPath, handler);
+        _ = await _builder!.BuildAsync();
+
+        var guid = _builder.MockCoreWebView2.SimulateGet(_testPath, JsonSerializer.Serialize(body, Serialization.DefaultCamelCase));
+
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
+        _ = response.Status.Should().Be(HttpStatusCode.OK);
+        _ = response.RequestId.Should().Be(guid);
+        _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
+    }
+
 
 
     [Theory]
@@ -224,6 +239,17 @@ public class UserPwd(string user, string password)
 {
     public string User { get; } = user;
     public string Password { get; } = password;
+}
+
+public class BodyParamsData : IEnumerable<object[]>
+{
+    public IEnumerator<object[]> GetEnumerator()
+    {
+        yield return new object[] { new Dictionary<string, string> { { "p1", "123"}, { "p2", "345" } }, (int p1, int p2) => p1+p2, 123+345 };
+
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 }
 
 public class UrlParamsDataAsync : IEnumerable<object[]>

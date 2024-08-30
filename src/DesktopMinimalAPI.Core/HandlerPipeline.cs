@@ -4,6 +4,7 @@ using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
 using LanguageExt.UnsafeValueAccess;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
@@ -52,8 +53,8 @@ internal static class HandlerPipeline
       {
           try
           {
-              var p1 = request.Route.Parameters.Any() 
-              ? TryGetParameter<TIn>(request.Route.Parameters[0], options) 
+              var p1 = request.Route.Parameters.Any()
+              ? TryGetParameter<TIn>(request.Route.Parameters[0], options)
               : JsonSerializer.Deserialize<TIn>(request.Body.ValueUnsafe().Value, options ?? Serialization.DefaultCamelCase);
               var result = handler(p1);
               return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
@@ -69,8 +70,18 @@ internal static class HandlerPipeline
       {
           try
           {
-              var p1 = TryGetParameter<TIn1>(request.Route.Parameters[0], options);
-              var p2 = TryGetParameter<TIn2>(request.Route.Parameters[1], options);
+              TIn1 p1 = default;
+              TIn2 p2 = default;
+              if (request.Route.Parameters.Length == 2)
+              {
+                  (p1, p2) = (TryGetParameter<TIn1>(request.Route.Parameters[0], options), TryGetParameter<TIn2>(request.Route.Parameters[1], options));
+              }
+              else
+              {
+                  var bodyDict = JsonSerializer.Deserialize<Dictionary<string, string>>(request.Body.ValueUnsafe().Value);
+                  (p1, p2) = (TryGetParameter<TIn1>(bodyDict[bodyDict.Keys.First()], options), TryGetParameter<TIn2>(bodyDict[bodyDict.Keys.Skip(1).First()], options));
+              }
+
               var result = handler(p1, p2);
               return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
           }
