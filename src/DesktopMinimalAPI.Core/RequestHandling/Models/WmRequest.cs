@@ -11,7 +11,7 @@ public record WmRequest(RequestId Id, Method Method, Route Route, Option<JsonBod
     internal static Either<RequestException, WmRequest> From(WmRequestDto dto) =>
        RequestId.From(dto.RequestId)
         .ToEither(() => RequestException.From(new ArgumentException(nameof(dto.RequestId))))
-       .Bind(guid => WithId(guid, dto));
+        .Bind(guid => WithId(guid, dto));
 
     static Either<RequestException, WmRequest> WithId(RequestId requestId, WmRequestDto dto) =>
          from method in Method.Parse(dto.Method).ToEither(() => RequestException.FromArgumentException(requestId, nameof(dto.Method)))

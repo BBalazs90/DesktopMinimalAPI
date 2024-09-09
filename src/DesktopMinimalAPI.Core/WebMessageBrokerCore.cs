@@ -39,73 +39,45 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
 
     private void StartRequestProcessingPipeline(EventArgs e)
     {
-        var reponse = DecodeRequest(e)
-            .Bind(FindHandler)
+       var request = DecodeRequest(e);
+        Task.Run(() =>
+            request.Bind(FindHandler)
             .Map(SafeInvokeHandler)
             .Match(
-                Right: response => response,
+                Right: response => response.ContinueWith(r => PostResponse(r.Result, _context)),
                 Left: ex => ex switch
                 {
-                    RequestException reqEx when reqEx.InnerException is KeyNotFoundException => new WmResponse(reqEx.RequestId, HttpStatusCode.NotFound, string.Join(' ', reqEx.Message, reqEx.InnerException?.Message)),
-                    RequestException reqEx => new WmResponse(reqEx.RequestId, HttpStatusCode.BadRequest, string.Join(' ', reqEx.Message, reqEx.InnerException?.Message)),
-                    _ => new WmResponse(Guid.Empty, HttpStatusCode.InternalServerError, ex.Message)
+                    RequestException reqEx when reqEx.InnerException is KeyNotFoundException => HandleException(new WmResponse(reqEx.RequestId, HttpStatusCode.NotFound, string.Join(' ', reqEx.Message, reqEx.InnerException?.Message))),
+                    RequestException reqEx => HandleException(new WmResponse(reqEx.RequestId, HttpStatusCode.BadRequest, string.Join(' ', reqEx.Message, reqEx.InnerException?.Message))),
+                    _ => HandleException(new WmResponse(Guid.Empty, HttpStatusCode.InternalServerError, ex.Message))
                 }
-                );
-
-
-        PostResponse(reponse);
-
-        //var (request, invalidRequestReponse) = RequestReaderPipeline.TryGetRequest(e);
-        //if (invalidRequestReponse is not null)
-        //{
-        //    PostResponse(invalidRequestReponse);
-        //    return;
-        //}
-
-        //Debug.Assert(request is not null, "If the invalidRequestReponse is not null, the previous method must return a non-null request");
-        //var route = RoutePipeline.GetRoot(request.Path);
-        //var transformedRequest = RequestTransformerPipeline.Transform(request);
-        //var handler = request.Method switch
-        //{
-        //    var method when method == Method.Get => GetMessageHandlers.GetValueOrDefault(route),
-        //    var method when method == Method.Post => PostMessageHandlers.GetValueOrDefault(route),
-        //    _ => null
-        //};
-
-        //if (handler is null)
-        //{
-        //    var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
-        //    CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
-        //    return;
-        //}
-
-        //_ = Task.Run(async () => await handler
-        //    .Invoke(transformedRequest)
-        //    .ContinueWith(resp => 
-        //        _context?.Post(
-        //            _ => CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, Serialization.DefaultCamelCase)), null),
-        //            TaskScheduler.Current)
-        //    .ConfigureAwait(false));
-
-
-
-        void PostResponse(WmResponse response) =>
-            CoreWebView.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
+              ));
 
     }
 
-    private Either<RequestException, Task<WmResponse>> FindHandler(WmRequest request) => request.Method switch
+    void PostResponse(WmResponse response, SynchronizationContext context) =>
+        context.Post((state) =>
+            CoreWebView.PostWebMessageAsString(JsonSerializer.Serialize(state, Serialization.DefaultCamelCase)), response);
+
+    Task HandleException(WmResponse response)
+    {
+        PostResponse(response, _context);
+        return Task.CompletedTask;
+    }
+
+
+    private Either<RequestException, Func<Task<WmResponse>>> FindHandler(WmRequest request) => request.Method switch
     {
         Get => GetMessageHandlers.TryGetValue(request.Route, out var handler)
-            ? handler(request)
+            ? new Func<Task<WmResponse>>(() => handler(request))
             : RequestException.From(request.Id, new KeyNotFoundException($"No handler was registered for the route '{request.Route.Path}'")),
         Post => PostMessageHandlers.TryGetValue(request.Route, out var handler)
-           ? handler(request)
+           ? new Func<Task<WmResponse>>(() => handler(request))
            : RequestException.From(request.Id, new KeyNotFoundException($"No handler was registered for the route '{request.Route.Path}'")),
         _ => RequestException.From(request.Id, new Exception("This cannot happen"))
     };
-       
 
-    private WmResponse SafeInvokeHandler(Task<WmResponse> handler) => handler.Result;
+
+    private async Task<WmResponse> SafeInvokeHandler(Func<Task<WmResponse>> handler) => await handler().ConfigureAwait(false);
 }
 

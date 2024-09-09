@@ -7,6 +7,7 @@ using Microsoft.Web.WebView2.Core;
 using System;
 using System.Net;
 using System.Text.Json;
+using System.Threading;
 
 namespace DesktopMinimalAPI.Core.RequestHandling;
 

@@ -5,6 +5,7 @@ using System.Text.Json;
 using FluentAssertions;
 using System.Net;
 using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
+using LanguageExt;
 
 namespace DesktopMinimalAPI.Core.Tests;
 
@@ -48,6 +49,25 @@ public sealed class WhenGetRequestReceived
         _ = response.Status.Should().Be(HttpStatusCode.InternalServerError);
         _ = response.RequestId.Should().Be(guid);
         _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(errorMessage);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ShouldSupportEitherBasedHandlers(bool isRight)
+    {
+        const string errorMessage = "Oh, noooo!";
+        const string successMessage = "Oh, noooo!";
+        Func<Either<Exception, string>> handler = () => isRight ? successMessage : new Exception(errorMessage);
+        _ = _builder.MapGet(_testPath, handler);
+        _ = await _builder!.BuildAsync();
+
+        var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
+
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
+        _ = response.Status.Should().Be(isRight ? HttpStatusCode.OK : HttpStatusCode.InternalServerError);
+        _ = response.RequestId.Should().Be(guid);
+        _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(isRight ? successMessage : errorMessage);
     }
 
     [Fact]

@@ -2,6 +2,7 @@
 using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
+using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 using System;
 using System.Collections.Generic;
@@ -34,19 +35,11 @@ internal static class HandlerPipeline
           }
       };
 
-    //internal static Func<TransformedWmRequest, WmResponse> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
-    //  (request) =>
-    //  {
-    //      try
-    //      {
-    //          var result = handler().GetAwaiter().GetResult();
-    //          return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
-    //      }
-    //      catch (Exception ex)
-    //      {
-    //          return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
-    //      }
-    //  };
+    internal static Func<WmRequest, WmResponse> Transform<T>(Func<Either<Exception, T>> handler, JsonSerializerOptions? options = null) =>
+     (request) => handler().Match(
+             Right: resultValue => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(resultValue, options ?? Serialization.DefaultCamelCase)),
+             Left: ex => new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase)));
+            
 
     public static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<TIn, TOut> handler, JsonSerializerOptions? options = null) =>
       (request) =>
