@@ -35,7 +35,8 @@ internal static class HandlerPipeline
           }
       };
 
-    internal static Func<WmRequest, WmResponse> Transform<T>(Func<Either<Exception, T>> handler, JsonSerializerOptions? options = null) =>
+    internal static Func<WmRequest, WmResponse> Transform<Tex, TRight>(Func<Either<Tex, TRight>> handler, JsonSerializerOptions? options = null) 
+        where Tex : Exception =>
      (request) => handler().Match(
              Right: resultValue => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(resultValue, options ?? Serialization.DefaultCamelCase)),
              Left: ex => new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase)));
@@ -116,6 +117,12 @@ internal static class HandlerPipeline
               return Task.FromResult(new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
           }
       };
+
+    internal static Func<WmRequest, Task<WmResponse>> Transform<TEx, TRight>(Func<Task<Either<TEx, TRight>>> handler, JsonSerializerOptions? options = null)
+        where TEx : Exception =>
+    (request) => handler().ContinueWith(task => task.Result.Match(
+            Right: resultValue => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(resultValue, options ?? Serialization.DefaultCamelCase)),
+            Left: ex => new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase))));
 
     public static Func<WmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<TIn, Task<TOut>> handler, JsonSerializerOptions? options = null) =>
       (request) =>

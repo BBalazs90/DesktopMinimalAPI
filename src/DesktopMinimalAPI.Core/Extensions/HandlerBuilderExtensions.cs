@@ -23,10 +23,15 @@ public static class HandlerBuilderExtensions
     public static HandlerBuilderBase MapGet<TOut>(this HandlerBuilderBase builder, string route, Func<TOut> handler) =>
         ApplyRoute<Func<WmRequest, WmResponse>>(route, builder.MapGet)(Transform(handler));
 
-    public static HandlerBuilderBase MapGet<TOut>(this HandlerBuilderBase builder, string route, Func<Either<Exception, TOut>> handler) =>
+    public static HandlerBuilderBase MapGet<TEx, TOut>(this HandlerBuilderBase builder, string route, Func<Either<TEx, TOut>> handler)
+        where TEx: Exception=>
         ApplyRoute<Func<WmRequest, WmResponse>>(route, builder.MapGet)(Transform(handler));
 
     public static HandlerBuilderBase MapGet<TOut>(this HandlerBuilderBase builder, string route, Func<Task<TOut>> handler) =>
+        ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapGet)(Transform(handler));
+
+    public static HandlerBuilderBase MapGet<TEx, TOut>(this HandlerBuilderBase builder, string route, Func<Task<Either<TEx, TOut>>> handler)
+        where TEx : Exception =>
         ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapGet)(Transform(handler));
 
     public static HandlerBuilderBase MapGet<TIn, TOut>(this HandlerBuilderBase builder, string route, Func<TIn, TOut> handler) =>
