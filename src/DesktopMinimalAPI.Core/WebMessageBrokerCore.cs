@@ -40,11 +40,12 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
     private void StartRequestProcessingPipeline(EventArgs e)
     {
        var request = DecodeRequest(e);
-        Task.Run(() =>
-            request.Bind(FindHandler)
-            .Map(SafeInvokeHandler)
+        _ = Task.Run(() =>
+            request
+            .Bind(FindHandler)
+            .Map(async handler => await handler().ConfigureAwait(false))
             .Match(
-                Right: response => response.ContinueWith(r => PostResponse(r.Result, _context)),
+                Right: response => response.ContinueWith(r => PostResponse(r.Result, _context), TaskScheduler.Default),
                 Left: ex => ex switch
                 {
                     RequestException reqEx when reqEx.InnerException is KeyNotFoundException => HandleException(new WmResponse(reqEx.RequestId, HttpStatusCode.NotFound, string.Join(' ', reqEx.Message, reqEx.InnerException?.Message))),
@@ -76,8 +77,5 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
            : RequestException.From(request.Id, new KeyNotFoundException($"No handler was registered for the route '{request.Route.Path}'")),
         _ => RequestException.From(request.Id, new Exception("This cannot happen"))
     };
-
-
-    private async Task<WmResponse> SafeInvokeHandler(Func<Task<WmResponse>> handler) => await handler().ConfigureAwait(false);
 }
 

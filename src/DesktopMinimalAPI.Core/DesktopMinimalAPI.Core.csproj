@@ -20,8 +20,4 @@
 		<AdditionalFiles Include="CodeMetricsConfig.txt" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="HandlerRegistration\" />
-	</ItemGroup>
-
 </Project>

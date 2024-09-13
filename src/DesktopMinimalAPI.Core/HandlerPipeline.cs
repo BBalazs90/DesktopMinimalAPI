@@ -1,5 +1,4 @@
 ﻿using DesktopMinimalAPI.Core.Configuration;
-using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
@@ -10,7 +9,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -21,20 +19,6 @@ namespace DesktopMinimalAPI.Core;
     "must be cached and returned to the requestor.")]
 internal static class HandlerPipeline
 {
-    internal static Func<WmRequest, WmResponse> Transform<T>(Func<T> handler, JsonSerializerOptions? options = null) =>
-      (request) =>
-      {
-          try
-          {
-              var result = handler();
-              return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
-          }
-          catch (Exception ex)
-          {
-              return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
-          }
-      };
-
     internal static Func<WmRequest, WmResponse> Transform<Tex, TRight>(Func<Either<Tex, TRight>> handler, JsonSerializerOptions? options = null) 
         where Tex : Exception =>
      (request) => handler().Match(

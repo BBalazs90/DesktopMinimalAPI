@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Features.HandlerRegistration;
-using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 using static DesktopMinimalAPI.Core.HandlerPipeline;
-using static DesktopMinimalAPI.Core.RoutePipeline;
+using static DesktopMinimalAPI.Core.HandlerRegistration.Sync.SyncHandlerTransformer;
 
 namespace DesktopMinimalAPI.Extensions;
 
