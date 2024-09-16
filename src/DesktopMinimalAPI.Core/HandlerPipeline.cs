@@ -19,11 +19,7 @@ namespace DesktopMinimalAPI.Core;
     "must be cached and returned to the requestor.")]
 internal static class HandlerPipeline
 {
-    internal static Func<WmRequest, WmResponse> Transform<Tex, TRight>(Func<Either<Tex, TRight>> handler, JsonSerializerOptions? options = null) 
-        where Tex : Exception =>
-     (request) => handler().Match(
-             Right: resultValue => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(resultValue, options ?? Serialization.DefaultCamelCase)),
-             Left: ex => new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase)));
+    
             
 
     public static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<TIn, TOut> handler, JsonSerializerOptions? options = null) =>
@@ -102,11 +98,7 @@ internal static class HandlerPipeline
           }
       };
 
-    internal static Func<WmRequest, Task<WmResponse>> Transform<TEx, TRight>(Func<Task<Either<TEx, TRight>>> handler, JsonSerializerOptions? options = null)
-        where TEx : Exception =>
-    (request) => handler().ContinueWith(task => task.Result.Match(
-            Right: resultValue => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(resultValue, options ?? Serialization.DefaultCamelCase)),
-            Left: ex => new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase))));
+    
 
     public static Func<WmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<TIn, Task<TOut>> handler, JsonSerializerOptions? options = null) =>
       (request) =>

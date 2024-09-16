@@ -8,6 +8,8 @@ using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
 using static DesktopMinimalAPI.Core.HandlerPipeline;
 using static DesktopMinimalAPI.Core.HandlerRegistration.Sync.SyncHandlerTransformer;
+using static DesktopMinimalAPI.Core.HandlerRegistration.EitherBased.Async.EitherAsyncHandlerTransformer;
+using static DesktopMinimalAPI.Core.HandlerRegistration.EitherBased.Sync.EitherSyncHandlerTransformer;
 
 namespace DesktopMinimalAPI.Extensions;
 
@@ -29,6 +31,10 @@ public static class HandlerBuilderExtensions
         ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapGet)(Transform(handler));
 
     public static HandlerBuilderBase MapGet<TEx, TOut>(this HandlerBuilderBase builder, string route, Func<Task<Either<TEx, TOut>>> handler)
+        where TEx : Exception =>
+        ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapGet)(Transform(handler));
+
+    public static HandlerBuilderBase MapGet<TIn, TEx, TOut>(this HandlerBuilderBase builder, string route, Func<TIn, Task<Either<TEx, TOut>>> handler)
         where TEx : Exception =>
         ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapGet)(Transform(handler));
 
