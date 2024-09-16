@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using DesktopMinimalAPI.Core.Features.HandlerRegistration;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
 using LanguageExt.UnsafeValueAccess;
+using DesktopMinimalAPI.Core.HandlerRegistration;
 using static DesktopMinimalAPI.Core.HandlerPipeline;
 using static DesktopMinimalAPI.Core.HandlerRegistration.Sync.SyncHandlerTransformer;
 using static DesktopMinimalAPI.Core.HandlerRegistration.EitherBased.Async.EitherAsyncHandlerTransformer;

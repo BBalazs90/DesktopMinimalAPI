@@ -1,12 +1,11 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
-using DesktopMinimalAPI.Core.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace DesktopMinimalAPI.Core.Features.HandlerRegistration;
+namespace DesktopMinimalAPI.Core.HandlerRegistration;
 
 public abstract class HandlerBuilderBase
 {
