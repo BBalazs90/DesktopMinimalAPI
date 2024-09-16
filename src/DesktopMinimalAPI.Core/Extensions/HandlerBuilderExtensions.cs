@@ -10,6 +10,7 @@ using static DesktopMinimalAPI.Core.HandlerPipeline;
 using static DesktopMinimalAPI.Core.HandlerRegistration.Sync.SyncHandlerTransformer;
 using static DesktopMinimalAPI.Core.HandlerRegistration.EitherBased.Async.EitherAsyncHandlerTransformer;
 using static DesktopMinimalAPI.Core.HandlerRegistration.EitherBased.Sync.EitherSyncHandlerTransformer;
+using DesktopMinimalAPI.Core.Models;
 
 namespace DesktopMinimalAPI.Extensions;
 
@@ -34,9 +35,10 @@ public static class HandlerBuilderExtensions
         where TEx : Exception =>
         ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapGet)(Transform(handler));
 
-    public static HandlerBuilderBase MapGet<TIn, TEx, TOut>(this HandlerBuilderBase builder, string route, Func<TIn, Task<Either<TEx, TOut>>> handler)
+    public static HandlerBuilderBase MapGet<TP, TIn, TEx, TOut>(this HandlerBuilderBase builder, string route, Func<TP, Task<Either<TEx, TOut>>> handler)
+        where TP : ParameterSource<TIn>
         where TEx : Exception =>
-        ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapGet)(Transform(handler));
+        ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapGet)(Transform<TP,TIn,TEx,TOut>(handler));
 
     public static HandlerBuilderBase MapGet<TIn, TOut>(this HandlerBuilderBase builder, string route, Func<TIn, TOut> handler) =>
       ApplyRoute<Func<WmRequest, WmResponse>>(route, builder.MapGet)(Transform(handler));

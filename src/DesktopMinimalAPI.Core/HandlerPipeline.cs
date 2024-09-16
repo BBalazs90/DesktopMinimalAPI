@@ -19,8 +19,8 @@ namespace DesktopMinimalAPI.Core;
     "must be cached and returned to the requestor.")]
 internal static class HandlerPipeline
 {
-    
-            
+
+
 
     public static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<TIn, TOut> handler, JsonSerializerOptions? options = null) =>
       (request) =>
@@ -98,26 +98,26 @@ internal static class HandlerPipeline
           }
       };
 
-    
 
-    public static Func<WmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<TIn, Task<TOut>> handler, JsonSerializerOptions? options = null) =>
-      (request) =>
-      {
-          try
-          {
-              var p1 = request.Route.Parameters.Any()
-              ? TryGetParameter<TIn>(request.Route.Parameters[0], options)
-              : JsonSerializer.Deserialize<TIn>(request.Body.ValueUnsafe().Value, options ?? Serialization.DefaultCamelCase);
-              var result = handler(p1);
-              return result
-              .ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
-              TaskScheduler.Current);
-          }
-          catch (Exception ex)
-          {
-              return Task.FromResult(new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
-          }
-      };
+
+    //public static Func<WmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<TIn, Task<TOut>> handler, JsonSerializerOptions? options = null) =>
+    //  (request) =>
+    //  {
+    //      try
+    //      {
+    //          var p1 = request.Route.Parameters.Any()
+    //          ? TryGetParameter<TIn>(request.Route.Parameters[0], options)
+    //          : JsonSerializer.Deserialize<TIn>(request.Body.ValueUnsafe().Value, options ?? Serialization.DefaultCamelCase);
+    //          var result = handler(p1);
+    //          return result
+    //          .ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
+    //          TaskScheduler.Current);
+    //      }
+    //      catch (Exception ex)
+    //      {
+    //          return Task.FromResult(new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex, options ?? Serialization.DefaultCamelCase)));
+    //      }
+    //  };
 
     public static Func<WmRequest, Task<WmResponse>> Transform<TIn1, TIn2, TOut>(Func<TIn1, TIn2, Task<TOut>> handler, JsonSerializerOptions? options = null) =>
       (request) =>
