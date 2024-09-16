@@ -1,10 +1,10 @@
 ﻿using DesktopMinimalAPI.Core.Configuration;
 using DesktopMinimalAPI.Core.Tests.Helpers;
-using DesktopMinimalAPI.Extensions;
 using System.Text.Json;
 using FluentAssertions;
 using System.Net;
-using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
+using DesktopMinimalAPI.Core.HandlerRegistration.Sync;
+using DesktopMinimalAPI.Core.HandlerRegistration.Async;
 using LanguageExt;
 
 namespace DesktopMinimalAPI.Core.Tests;
@@ -153,15 +153,16 @@ public sealed class WhenGetRequestReceived
     [ClassData(typeof(UrlParamData))]
     public async Task ShouldPassUrlParamToHandler<TIn, TOut>(string route, Func<TIn, TOut> handler, TOut expectedResult)
     {
-        _ = _builder.MapGet(route, handler);
-        _ = await _builder!.BuildAsync();
+        throw new NotImplementedException();
+        //_ = _builder.MapGet(route, handler);
+        //_ = await _builder!.BuildAsync();
 
-        var guid = _builder.MockCoreWebView2.SimulateGet(route);
+        //var guid = _builder.MockCoreWebView2.SimulateGet(route);
 
-        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
-        _ = response.Status.Should().Be(HttpStatusCode.OK);
-        _ = response.RequestId.Should().Be(guid);
-        _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
+        //var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
+        //_ = response.Status.Should().Be(HttpStatusCode.OK);
+        //_ = response.RequestId.Should().Be(guid);
+        //_ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
 
 
@@ -169,30 +170,32 @@ public sealed class WhenGetRequestReceived
     [ClassData(typeof(BodyParamData))]
     public async Task ShouldPassBodyParamToHandler<TIn, TOut>(TIn param, Func<TIn, TOut> handler, TOut expectedResult)
     {
-        _ = _builder.MapGet(_testPath, handler);
-        _ = await _builder!.BuildAsync();
+        throw new NotImplementedException();
+        //_ = _builder.MapGet(_testPath, handler);
+        //_ = await _builder!.BuildAsync();
 
-        var guid = _builder.MockCoreWebView2.SimulateGet(_testPath, JsonSerializer.Serialize(param, Serialization.DefaultCamelCase));
+        //var guid = _builder.MockCoreWebView2.SimulateGet(_testPath, JsonSerializer.Serialize(param, Serialization.DefaultCamelCase));
 
-        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
-        _ = response.Status.Should().Be(HttpStatusCode.OK);
-        _ = response.RequestId.Should().Be(guid);
-        _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
+        //var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
+        //_ = response.Status.Should().Be(HttpStatusCode.OK);
+        //_ = response.RequestId.Should().Be(guid);
+        //_ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
 
     [Theory]
     [ClassData(typeof(BodyParamsData))]
     public async Task ShouldPassBodyParamsToHandlerAndAssumeThatTheBodyIsAStringDictionary<TIn1, TIn2, TOut>(Dictionary<string, string> body, Func<TIn1, TIn2, TOut> handler, TOut expectedResult)
     {
-        _ = _builder.MapGet(_testPath, handler);
-        _ = await _builder!.BuildAsync();
+        throw new NotImplementedException();
+        //_ = _builder.MapGet(_testPath, handler);
+        //_ = await _builder!.BuildAsync();
 
-        var guid = _builder.MockCoreWebView2.SimulateGet(_testPath, JsonSerializer.Serialize(body, Serialization.DefaultCamelCase));
+        //var guid = _builder.MockCoreWebView2.SimulateGet(_testPath, JsonSerializer.Serialize(body, Serialization.DefaultCamelCase));
 
-        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
-        _ = response.Status.Should().Be(HttpStatusCode.OK);
-        _ = response.RequestId.Should().Be(guid);
-        _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
+        //var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
+        //_ = response.Status.Should().Be(HttpStatusCode.OK);
+        //_ = response.RequestId.Should().Be(guid);
+        //_ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
 
 
@@ -201,15 +204,16 @@ public sealed class WhenGetRequestReceived
     [ClassData(typeof(Url2ParamsData))]
     public async Task ShouldPassUrlParamsToHandler<T>(string route, Func<T, T, T> handler, T expectedResult)
     {
-        _ = _builder.MapGet(route, handler);
-        _ = await _builder!.BuildAsync();
+        throw new NotImplementedException();
+        //_ = _builder.MapGet(route, handler);
+        //_ = await _builder!.BuildAsync();
 
-        var guid = _builder.MockCoreWebView2.SimulateGet(route);
+        //var guid = _builder.MockCoreWebView2.SimulateGet(route);
 
-        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
-        _ = response.Status.Should().Be(HttpStatusCode.OK);
-        _ = response.RequestId.Should().Be(guid);
-        _ = JsonSerializer.Deserialize<T>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
+        //var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
+        //_ = response.Status.Should().Be(HttpStatusCode.OK);
+        //_ = response.RequestId.Should().Be(guid);
+        //_ = JsonSerializer.Deserialize<T>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
 
     [Fact]

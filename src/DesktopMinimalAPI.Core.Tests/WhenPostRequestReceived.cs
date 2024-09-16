@@ -3,7 +3,8 @@ using DesktopMinimalAPI.Core.Tests.Helpers;
 using FluentAssertions;
 using System.Net;
 using System.Text.Json;
-using DesktopMinimalAPI.Extensions;
+using DesktopMinimalAPI.Core.HandlerRegistration.Sync;
+using DesktopMinimalAPI.Core.HandlerRegistration.Async;
 
 namespace DesktopMinimalAPI.Core.Tests;
 public sealed class WhenPostRequestReceived
