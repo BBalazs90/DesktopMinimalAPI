@@ -12,7 +12,12 @@ namespace DesktopMinimalAPI.Core.HandlerRegistration.Async;
 internal static class AsyncHandlerTransformer
 {
     internal static Func<WmRequest, Task<WmResponse>> Transform<T>(Func<Task<HandlerResult<T>>> handler, JsonSerializerOptions? options = null) =>
-      (request) => handler().ContinueWith(task => new WmResponse(request.Id, task.Result.StatusCode, JsonSerializer.Serialize(task.Result.Value, options ?? Serialization.DefaultCamelCase)),
+      (request) => handler()
+        .ContinueWith(task => new WmResponse(request.Id,
+                                            task.Result.StatusCode, 
+                                            task.Result.Value.Match<string>(
+                                                Left: msg => msg, 
+                                                Right: value => JsonSerializer.Serialize(value, options ?? Serialization.DefaultCamelCase))),
         TaskScheduler.Current);
 
     internal static Func<WmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<FromUrl<TIn>, Task<HandlerResult<TOut>>> handler, JsonSerializerOptions? options = null) =>
