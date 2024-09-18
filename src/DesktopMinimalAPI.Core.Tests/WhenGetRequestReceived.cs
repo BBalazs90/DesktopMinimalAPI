@@ -250,12 +250,6 @@ public class UrlParamData : IEnumerable<object[]>
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 }
 
-public static class FuncExt
-{
-    public static Func<ParameterSource<TIn>, HandlerResult<TOut>> Ass<TIn, TOut>(this Func<FromUrl<TIn>, HandlerResult<TOut>> source) =>
-        source as Func<ParameterSource<TIn>, HandlerResult<TOut>> ?? throw new ArgumentOutOfRangeException("Nooooooo");
-}
-
 public class BodyParamData : IEnumerable<object[]>
 {
     public IEnumerator<object[]> GetEnumerator()
