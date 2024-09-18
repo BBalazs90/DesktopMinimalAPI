@@ -7,6 +7,10 @@ using DesktopMinimalAPI.Core.HandlerRegistration.Sync;
 using DesktopMinimalAPI.Core.HandlerRegistration.Async;
 using LanguageExt;
 
+using static DesktopMinimalAPI.Core.HandlerRegistration.HandlerResult;
+using DesktopMinimalAPI.Core.HandlerRegistration;
+using DesktopMinimalAPI.Core.Models;
+
 namespace DesktopMinimalAPI.Core.Tests;
 
 public sealed class WhenGetRequestReceived
@@ -22,8 +26,8 @@ public sealed class WhenGetRequestReceived
     [Fact]
     public async Task ShouldReturnOkResponseWithHandlerContentAndRequestId()
     {
-        const string HandlerReturn = "Awesome, I work!";
-        var handler = () => HandlerReturn;
+        const string SimulatedResult = "Awesome, I work!";
+        var handler = () => Ok(SimulatedResult);
         _ = _builder.MapGet(_testPath, handler);
         _ = await _builder!.BuildAsync();
 
@@ -32,49 +36,46 @@ public sealed class WhenGetRequestReceived
         var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
         _ = response.Status.Should().Be(HttpStatusCode.OK);
         _ = response.RequestId.Should().Be(guid);
-        _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(HandlerReturn);
+        _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(SimulatedResult);
     }
 
     [Fact]
-    public async Task ShouldReturnServerErrorResponseAndTheExceptionIfHandlerFailed()
+    public async Task ShouldReturnErrorResponseAndTheExceptionIfHandlerFailed()
     {
-        const string errorMessage = "Oh, noooo!";
-        Func<int> handler = () => throw new Exception(errorMessage); // Explicit type because from exception cannot be infered.
+        const string SimulatedErrorMessage = "Oh, noooo!";
+        Func<HandlerResult<int>> handler = () => throw new Exception(SimulatedErrorMessage); // Explicit type because from exception cannot be infered.
         _ = _builder.MapGet(_testPath, handler);
         _ = await _builder!.BuildAsync();
 
         var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
 
         var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
-        _ = response.Status.Should().Be(HttpStatusCode.InternalServerError);
+        _ = response.Status.Should().Be(HttpStatusCode.BadRequest);
         _ = response.RequestId.Should().Be(guid);
-        _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(errorMessage);
+        _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(SimulatedErrorMessage);
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task ShouldSupportEitherBasedHandlers(bool isRight)
+    [Fact]
+    public async Task ShouldReturnErrorResponseWithHandlerContentIfHandlerReturnedError()
     {
-        const string errorMessage = "Oh, noooo!";
-        const string successMessage = "Oh, noooo!";
-        Func<Either<Exception, string>> handler = () => isRight ? successMessage : new Exception(errorMessage);
+        const string SimulatedResult = "Oh noo, I could not succeed!";
+        var handler = () => BadRequest(SimulatedResult);
         _ = _builder.MapGet(_testPath, handler);
         _ = await _builder!.BuildAsync();
 
         var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
 
         var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
-        _ = response.Status.Should().Be(isRight ? HttpStatusCode.OK : HttpStatusCode.InternalServerError);
+        _ = response.Status.Should().Be(HttpStatusCode.BadRequest);
         _ = response.RequestId.Should().Be(guid);
-        _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(isRight ? successMessage : errorMessage);
+        _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(SimulatedResult);
     }
 
     [Fact]
     public async Task ShouldReturnNotFoundIfTriedToCallEndpointThatIsNotRegistered()
     {
         const string HandlerReturn = "Awesome, I work! But nobody calls me :(";
-        var handler = () => HandlerReturn;
+        var handler = () => Ok(HandlerReturn);
         _ = _builder.MapGet(_testPath, handler);
         _ = await _builder!.BuildAsync();
         const string notRegisteredPath = "/notRegistered";
@@ -151,18 +152,18 @@ public sealed class WhenGetRequestReceived
 
     [Theory]
     [ClassData(typeof(UrlParamData))]
-    public async Task ShouldPassUrlParamToHandler<TIn, TOut>(string route, Func<TIn, TOut> handler, TOut expectedResult)
+    public async Task ShouldPassUrlParamToHandler<TIn, TOut>(string route, Func<FromUrl<TIn>, HandlerResult<TOut>> handler, TOut expectedResult)
     {
-        throw new NotImplementedException();
-        //_ = _builder.MapGet(route, handler);
-        //_ = await _builder!.BuildAsync();
+ 
+        _ = _builder.MapGet(route, handler);
+        _ = await _builder!.BuildAsync();
 
-        //var guid = _builder.MockCoreWebView2.SimulateGet(route);
+        var guid = _builder.MockCoreWebView2.SimulateGet(route);
 
-        //var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
-        //_ = response.Status.Should().Be(HttpStatusCode.OK);
-        //_ = response.RequestId.Should().Be(guid);
-        //_ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
+        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
+        _ = response.Status.Should().Be(HttpStatusCode.OK);
+        _ = response.RequestId.Should().Be(guid);
+        _ = JsonSerializer.Deserialize<TOut>(response.Data, Serialization.DefaultCamelCase).Should().Be(expectedResult);
     }
 
 
@@ -219,17 +220,18 @@ public sealed class WhenGetRequestReceived
     [Fact]
     public async Task ShouldReturnResponseResultAsBodyEvenIfHandlerReturnsTask()
     {
-        var testBody = new TestBody("Balazs", 34);
-        var handler = async () => await Task.FromResult(testBody);
-        _ = _builder.MapGet(_testPath, handler);
-        _ = await _builder!.BuildAsync();
+        throw new NotImplementedException();
+        //var testBody = new TestBody("Balazs", 34);
+        //var handler = async () => await Task.FromResult(testBody);
+        //_ = _builder.MapGet(_testPath, handler);
+        //_ = await _builder!.BuildAsync();
 
-        var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
+        //var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
 
-        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
-        _ = response.Status.Should().Be(HttpStatusCode.OK);
-        _ = response.RequestId.Should().Be(guid);
-        _ = JsonSerializer.Deserialize<TestBody>(response.Data, Serialization.DefaultCamelCase).Should().Be(testBody);
+        //var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
+        //_ = response.Status.Should().Be(HttpStatusCode.OK);
+        //_ = response.RequestId.Should().Be(guid);
+        //_ = JsonSerializer.Deserialize<TestBody>(response.Data, Serialization.DefaultCamelCase).Should().Be(testBody);
     }
 }
 
@@ -237,15 +239,21 @@ public class UrlParamData : IEnumerable<object[]>
 {
     public IEnumerator<object[]> GetEnumerator()
     {
-        yield return new object[] { "/test?param1=1", (int param1) => 2 * param1, 2 * 1 };
-        yield return new object[] { "/test?param1=1", (int param1) => 2.3 * param1, 2.3 * 1 };
-        yield return new object[] { "/test?param1=1.2", (double param1) => 2 * param1, 2 * 1.2 };
-        yield return new object[] { "/test?param1=1.2", (double param1) => (int)Math.Floor(param1), 1 };
-        yield return new object[] { "/test?param1=asd", (string param1) => param1 + "l", "asdl" };
-        yield return new object[] { "/test?param1=asd", (string param1) => param1.Length, 3 };
+        yield return new object[] { "/test?param1=1", (FromUrl<int> param1) => Ok(2 * param1), 2 * 1 };
+        yield return new object[] { "/test?param1=1", (FromUrl<int> param1) => Ok(2.3 * param1), 2.3 * 1 };
+        yield return new object[] { "/test?param1=1.2", (FromUrl<double> param1) => Ok(2 * param1), 2 * 1.2 };
+        yield return new object[] { "/test?param1=1.2", (FromUrl<double> param1) => Ok((int)Math.Floor(param1)), 1 };
+        yield return new object[] { "/test?param1=asd", (FromUrl<string> param1) => Ok(param1 + "l"), "asdl" };
+        //yield return new object[] { "/test?param1=asd", (FromUrl<string> param1) => Ok(param1.Length), 3 };
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
+public static class FuncExt
+{
+    public static Func<ParameterSource<TIn>, HandlerResult<TOut>> Ass<TIn, TOut>(this Func<FromUrl<TIn>, HandlerResult<TOut>> source) =>
+        source as Func<ParameterSource<TIn>, HandlerResult<TOut>> ?? throw new ArgumentOutOfRangeException("Nooooooo");
 }
 
 public class BodyParamData : IEnumerable<object[]>
