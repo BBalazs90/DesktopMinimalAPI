@@ -14,7 +14,7 @@ internal static class ParameterReader
 
     public static Option<(T1, T2)> GetUrlParameters<T1, T2>(ImmutableArray<UrlParameterString> urlParameters) =>
         ((T1)Convert.ChangeType(urlParameters[0].ToString(), typeof(T1), CultureInfo.InvariantCulture),
-        (T2)Convert.ChangeType(urlParameters[0].ToString(), typeof(T2), CultureInfo.InvariantCulture));
+        (T2)Convert.ChangeType(urlParameters[1].ToString(), typeof(T2), CultureInfo.InvariantCulture));
 
     public static Option<T> GetBodyParameter<T>(JsonBody body) =>
         JsonSerializer.Deserialize<T>(body.Value, Serialization.DefaultCamelCase) is T deserialized

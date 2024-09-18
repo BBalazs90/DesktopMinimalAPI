@@ -27,16 +27,13 @@ public static class BuilderExtensions
      ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapGet)(Transform(handler));
 
 
-    //public static HandlerBuilderBase MapPost<TOut>(this HandlerBuilderBase builder, string route, Func<Task<TOut>> handler) =>
-    //    ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapPost)(Transform(handler));
+    public static HandlerBuilderBase MapPost<TOut>(this HandlerBuilderBase builder, string route, Func<Task<HandlerResult<TOut>>> handler) =>
+        ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapPost)(Transform(handler));
 
 
-    //public static HandlerBuilderBase MapPost<TP, TIn, TOut>(this HandlerBuilderBase builder, string route, Func<TP, Task<TOut>> handler)
-    //    where TP : ParameterSource<TIn> =>
-    //  ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapPost)(Transform<TP, TIn, TOut>(handler));
+    public static HandlerBuilderBase MapPost<TIn, TOut>(this HandlerBuilderBase builder, string route, Func<FromUrl<TIn>, Task<HandlerResult<TOut>>> handler) =>
+      ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapPost)(Transform(handler));
 
-    //public static HandlerBuilderBase MapPost<TP1, TP2, TIn1, TIn2, TOut>(this HandlerBuilderBase builder, string route, Func<TP1, TP2, Task<TOut>> handler)
-    //    where TP1 : ParameterSource<TIn1>
-    //    where TP2 : ParameterSource<TIn2> =>
-    //   ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapPost)(Transform<TP1, TP2, TIn1, TIn2, TOut>(handler));
+    public static HandlerBuilderBase MapPost<TIn1, TIn2, TOut>(this HandlerBuilderBase builder, string route, Func<FromUrl<TIn1>, FromUrl<TIn2>, Task<HandlerResult<TOut>>> handler)  =>
+       ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapPost)(Transform(handler));
 }

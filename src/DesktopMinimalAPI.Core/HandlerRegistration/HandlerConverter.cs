@@ -13,11 +13,16 @@ internal static class HandlerConverter
         () => new HandlerResult<T>(source(), HttpStatusCode.OK);
 }
 
-public readonly record struct HandlerResult<T>(T Value, HttpStatusCode StatusCode);
+public readonly record struct HandlerResult<T>(T? Value, HttpStatusCode StatusCode);
 
 public static class HandlerResult
 {
-    public static HandlerResult<T> Ok<T>(T value) => new(value, HttpStatusCode.OK);
-    public static HandlerResult<T> BadRequest<T>(T value) => new(value, HttpStatusCode.BadRequest);
-    public static HandlerResult<T> InternalServerError<T>(T value) => new(value, HttpStatusCode.InternalServerError);
+    public static HandlerResult<T> Ok<T>() => Ok<T>(default);
+    public static HandlerResult<T> Ok<T>(T? value) => new(value, HttpStatusCode.OK);
+    public static HandlerResult<T> BadRequest<T>() => BadRequest<T>(default);
+    public static HandlerResult<T> BadRequest<T>(T? value) => new(value, HttpStatusCode.BadRequest);
+    public static HandlerResult<T> InternalServerError<T>() => InternalServerError<T>(default);
+    public static HandlerResult<T> InternalServerError<T>(T? value) => new(value, HttpStatusCode.InternalServerError);
+    public static HandlerResult<T> Unauthorized<T>() => Unauthorized<T>(default);
+    public static HandlerResult<T> Unauthorized<T>(T? value) => new(value, HttpStatusCode.Unauthorized);
 }
