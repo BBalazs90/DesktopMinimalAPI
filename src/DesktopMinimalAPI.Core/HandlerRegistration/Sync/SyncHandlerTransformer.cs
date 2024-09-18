@@ -5,19 +5,20 @@ using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
 using LanguageExt.UnsafeValueAccess;
 using System;
-using System.Linq;
 using System.Net;
 using System.Text.Json;
 using static LanguageExt.Prelude;
+using static DesktopMinimalAPI.Core.Support.SerializationHelper;
 
 namespace DesktopMinimalAPI.Core.HandlerRegistration.Sync;
 internal static class SyncHandlerTransformer
 {
-    internal static Func<WmRequest, WmResponse> Transform<T>(Func<HandlerResult<T>> handler, JsonSerializerOptions? options = null) =>
+   
+    internal static Func<WmRequest, WmResponse> Transform<T>(Func<HandlerResult<T>> handler) =>
       (request) => Try(handler)
         .Match(
-            Succ: result => new WmResponse(request.Id, result.StatusCode, JsonSerializer.Serialize(result.Value, options ?? Serialization.DefaultCamelCase)),
-            Fail: ex => new WmResponse(request.Id, HttpStatusCode.BadRequest, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase)));
+            Succ: result => new WmResponse(request.Id, result.StatusCode, CreateResponseBody(result)),
+            Fail: ex => new WmResponse(request.Id, HttpStatusCode.BadRequest, JsonSerializer.Serialize(ex.Message, Serialization.DefaultCamelCase)));
 
 
     public static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<FromUrl<TIn>, HandlerResult<TOut>> handler, JsonSerializerOptions? options = null) =>
@@ -49,4 +50,9 @@ internal static class SyncHandlerTransformer
                 return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
             }
         };
+
+    private static string CreateResponseBody<T>(HandlerResult<T> result) =>
+       result.Value.Match<string>(
+                      Left: msg => SerializeCamelCase(new {Message = (string)msg}),
+                      Right: value => SerializeCamelCase(value));
 }
