@@ -19,7 +19,7 @@ public class WhenHandlerTransformed
 
     [Theory]
     [MemberData(nameof(GetHandlerResultData))]
-    public void ShouldReturnAFunctionThatProperlyRepresentsResult(Func<HandlerResult<object>> handler,
+    public void ShouldReturnAFunctionThatProperlyRepresentsResult<T>(Func<HandlerResult<T>> handler,
         HttpStatusCode expectedStatusCode, string expectedData)
     {
         var transformedHandler = Transform(handler);
@@ -35,9 +35,13 @@ public class WhenHandlerTransformed
         new List<object[]>
         {
             new object[] { () => Ok(), HttpStatusCode.OK, SerializeCamelCase(new object()) },
-            new object[] { () => BadRequest<object>("Bad Request"), HttpStatusCode.BadRequest, SerializeCamelCase(new {Message= "Bad Request"}) },
-            new object[] { () => InternalServerError<object>("Internal Server Error"), HttpStatusCode.InternalServerError, SerializeCamelCase(new { Message = "Internal Server Error" }) }
+            new object[] { () => Ok(new TestRecord("Balazs", 34)), HttpStatusCode.OK, SerializeCamelCase(new TestRecord("Balazs", 34)) },
+            new object[] { () => BadRequest<TestRecord>("Bad Request"), HttpStatusCode.BadRequest, SerializeCamelCase(new {Message= "Bad Request"}) },
+            new object[] { () => BadRequest<TestRecord>(), HttpStatusCode.BadRequest, SerializeCamelCase(new {Message= ""}) },
+            new object[] { () => InternalServerError<TestRecord>("Internal Server Error"), HttpStatusCode.InternalServerError, SerializeCamelCase(new { Message = "Internal Server Error" }) },
+            new object[] { () => InternalServerError<TestRecord>(), HttpStatusCode.InternalServerError, SerializeCamelCase(new { Message = "" }) },
+            new object[] { () => { throw new Exception("I am nasty and dishonest!"); return Ok(); }, HttpStatusCode.BadRequest, SerializeCamelCase(new { Message = "I am nasty and dishonest!" }) }
         };
 
-   
+   public sealed record TestRecord(string Name, int Age);
 }

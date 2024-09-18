@@ -18,7 +18,7 @@ internal static class SyncHandlerTransformer
       (request) => Try(handler)
         .Match(
             Succ: result => new WmResponse(request.Id, result.StatusCode, CreateResponseBody(result)),
-            Fail: ex => new WmResponse(request.Id, HttpStatusCode.BadRequest, JsonSerializer.Serialize(ex.Message, Serialization.DefaultCamelCase)));
+            Fail: ex => new WmResponse(request.Id, HttpStatusCode.BadRequest, CreateResponseBody(ex)));
 
 
     public static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<FromUrl<TIn>, HandlerResult<TOut>> handler, JsonSerializerOptions? options = null) =>
@@ -55,4 +55,7 @@ internal static class SyncHandlerTransformer
        result.Value.Match<string>(
                       Left: msg => SerializeCamelCase(new {Message = (string)msg}),
                       Right: value => SerializeCamelCase(value));
+
+    private static string CreateResponseBody(Exception ex) =>
+        SerializeCamelCase(new {Message = ex.Message});
 }

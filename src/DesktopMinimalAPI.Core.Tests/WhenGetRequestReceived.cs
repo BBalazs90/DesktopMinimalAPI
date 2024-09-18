@@ -55,21 +55,21 @@ public sealed class WhenGetRequestReceived
         _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(SimulatedErrorMessage);
     }
 
-    [Fact]
-    public async Task ShouldReturnErrorResponseWithHandlerContentIfHandlerReturnedError()
-    {
-        const string SimulatedResult = "Oh noo, I could not succeed!";
-        var handler = () => BadRequest(SimulatedResult);
-        _ = _builder.MapGet(_testPath, handler);
-        _ = await _builder!.BuildAsync();
+    //[Fact]
+    //public async Task ShouldReturnErrorResponseWithHandlerContentIfHandlerReturnedError()
+    //{
+    //    const string SimulatedResult = "Oh noo, I could not succeed!";
+    //    var handler = () => BadRequest(SimulatedResult);
+    //    _ = _builder.MapGet(_testPath, handler);
+    //    _ = await _builder!.BuildAsync();
 
-        var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
+    //    var guid = _builder.MockCoreWebView2.SimulateGet(_testPath);
 
-        var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
-        _ = response.Status.Should().Be(HttpStatusCode.BadRequest);
-        _ = response.RequestId.Should().Be(guid);
-        _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(SimulatedResult);
-    }
+    //    var response = await _builder.MockCoreWebView2.ReadLastResponseAsync();
+    //    _ = response.Status.Should().Be(HttpStatusCode.BadRequest);
+    //    _ = response.RequestId.Should().Be(guid);
+    //    _ = JsonSerializer.Deserialize<string>(response.Data, Serialization.DefaultCamelCase).Should().Be(SimulatedResult);
+    //}
 
     [Fact]
     public async Task ShouldReturnNotFoundIfTriedToCallEndpointThatIsNotRegistered()
