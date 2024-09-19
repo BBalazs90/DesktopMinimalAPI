@@ -8,6 +8,7 @@ using LanguageExt;
 using FluentAssertions;
 using System.Net;
 using DesktopMinimalAPI.Core.HandlerRegistration;
+using DesktopMinimalAPI.Core.Models;
 
 namespace DesktopMinimalAPI.Core.Tests;
 public class WhenHandlerTransformed
@@ -18,7 +19,7 @@ public class WhenHandlerTransformed
     private static readonly WmRequest TestRequest = new(TestRequestId, Method.Get, TestRoute, Option<JsonBody>.None);
 
     [Theory]
-    [MemberData(nameof(GetHandlerResultData))]
+    [MemberData(nameof(GetHandlerResultDataWithoutParameter))]
     public void ShouldReturnAFunctionThatProperlyRepresentsResult<T>(Func<HandlerResult<T>> handler,
         HttpStatusCode expectedStatusCode, string expectedData)
     {
@@ -31,7 +32,23 @@ public class WhenHandlerTransformed
         _ = response.Data.Should().Be(expectedData);
     }
 
-    public static IEnumerable<object[]> GetHandlerResultData =>
+    [Theory]
+    [MemberData(nameof(GetHandlerResultDataWithOneUrlParameter))]
+    public void ShouldReturnASingleParameterFunctionThatProperlyRepresentsResult<TIn,TOut>(Func<FromUrl<TIn>,HandlerResult<TOut>> handler,
+        string urlString, HttpStatusCode expectedStatusCode, string expectedData)
+    {
+        var transformedHandler = Transform(handler);
+        var route = Route.From(urlString).Value();
+        var request = new WmRequest(TestRequestId, Method.Get, route, Option<JsonBody>.None);
+
+        var response = transformedHandler(request);
+
+        _ = response.RequestId.Should().Be(TestRequestId);
+        _ = response.Status.Should().Be(expectedStatusCode);
+        _ = response.Data.Should().Be(expectedData);
+    }
+
+    public static IEnumerable<object[]> GetHandlerResultDataWithoutParameter =>
         new List<object[]>
         {
             new object[] { () => Ok(), HttpStatusCode.OK, SerializeCamelCase(new object()) },
@@ -43,5 +60,15 @@ public class WhenHandlerTransformed
             new object[] { () => { throw new Exception("I am nasty and dishonest!"); return Ok(); }, HttpStatusCode.BadRequest, SerializeCamelCase(new { Message = "I am nasty and dishonest!" }) }
         };
 
-   public sealed record TestRecord(string Name, int Age);
+    public static IEnumerable<object[]> GetHandlerResultDataWithOneUrlParameter =>
+        new List<object[]>
+        {
+            new object[] { (FromUrl<string> s) => Ok(), "/test?p1=asd", HttpStatusCode.OK, SerializeCamelCase(new object()) },
+            new object[] { (FromUrl<int> i) => Ok(), "/test?p1=1", HttpStatusCode.OK, SerializeCamelCase(new object()) },
+            new object[] { (FromUrl<string> s) => BadRequest<string>("Bad Request"), "/test?p1=asd", HttpStatusCode.BadRequest, SerializeCamelCase(new {Message= "Bad Request"}) },
+            new object[] { (FromUrl<string> s) => InternalServerError<string>("Internal Server Error"), "/test?p1=asd", HttpStatusCode.InternalServerError, SerializeCamelCase(new { Message = "Internal Server Error" }) },
+            new object[] { (FromUrl<string> s) => { throw new Exception("I am nasty and dishonest!"); return Ok(); }, "/test?p1=asd", HttpStatusCode.BadRequest, SerializeCamelCase(new { Message = "I am nasty and dishonest!" }) }
+        };
+
+    public sealed record TestRecord(string Name, int Age);
 }

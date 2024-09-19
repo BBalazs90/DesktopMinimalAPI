@@ -9,6 +9,8 @@ using System.Net;
 using System.Text.Json;
 using static LanguageExt.Prelude;
 using static DesktopMinimalAPI.Core.Support.SerializationHelper;
+using static DesktopMinimalAPI.Core.HandlerRegistration.HandlerResult;
+using LanguageExt;
 
 namespace DesktopMinimalAPI.Core.HandlerRegistration.Sync;
 internal static class SyncHandlerTransformer
@@ -21,20 +23,14 @@ internal static class SyncHandlerTransformer
             Fail: ex => new WmResponse(request.Id, HttpStatusCode.BadRequest, CreateResponseBody(ex)));
 
 
-    public static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<FromUrl<TIn>, HandlerResult<TOut>> handler, JsonSerializerOptions? options = null) =>
+    public static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<FromUrl<TIn>, HandlerResult<TOut>> handler) =>
         (request) =>
-        {
-            try
-            {
-                var p1 = ParameterReader.GetUrlParameter<TIn>(request.Route.Parameters);
-                var result = handler(p1.ValueUnsafe());
-                return new WmResponse(request.Id, result.StatusCode, JsonSerializer.Serialize(result.Value, options ?? Serialization.DefaultCamelCase));
-            }
-            catch (Exception ex)
-            {
-                return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
-            }
-        };
+                ParameterReader.GetUrlParameter<TIn>(request.Route.Parameters)
+                .Match(
+                       Some: p => Try(() => handler(p)).IfFail(ex => BadRequest<TOut>(ex.Message)),
+                       None: BadRequest<TOut>("Could not find the required URL parameter."))
+                .Apply(result => new WmResponse(request.Id, result.StatusCode, CreateResponseBody(result)));
+            
 
     public static Func<WmRequest, WmResponse> Transform<TIn1, TIn2, TOut>(Func<FromUrl<TIn1>, FromUrl<TIn2>, HandlerResult<TOut>> handler, JsonSerializerOptions? options = null) =>
         (request) =>

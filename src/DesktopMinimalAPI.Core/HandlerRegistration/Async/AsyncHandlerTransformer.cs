@@ -22,7 +22,9 @@ internal static class AsyncHandlerTransformer
 
     internal static Func<WmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<FromUrl<TIn>, Task<HandlerResult<TOut>>> handler, JsonSerializerOptions? options = null) =>
      (request) => handler(ParameterReader.GetUrlParameter<TIn>(request.Route.Parameters).ValueUnsafe())
-     .ContinueWith(task => new WmResponse(request.Id, task.Result.StatusCode, JsonSerializer.Serialize(task.Result.Value, options ?? Serialization.DefaultCamelCase)),
+     .ContinueWith(task => new WmResponse(request.Id, task.Result.StatusCode, task.Result.Value.Match<string>(
+                                                Left: msg => msg,
+                                                Right: value => JsonSerializer.Serialize(value, options ?? Serialization.DefaultCamelCase))),
        TaskScheduler.Current);
 
     internal static Func<WmRequest, Task<WmResponse>> Transform<TIn1, TIn2, TOut>(Func<FromUrl<TIn1>, FromUrl<TIn2>, Task<HandlerResult<TOut>>> handler, JsonSerializerOptions? options = null) =>
