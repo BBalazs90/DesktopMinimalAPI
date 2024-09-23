@@ -35,4 +35,11 @@ internal static class AsyncHandlerTransformer
         .ContinueWith(task => new WmResponse(request.Id, task.Result.StatusCode, JsonSerializer.Serialize(task.Result.Value, options ?? Serialization.DefaultCamelCase)),
                  TaskScheduler.Current);
     };
+
+    internal static Func<WmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<FromBody<TIn>, Task<HandlerResult<TOut>>> handler, JsonSerializerOptions? options = null) =>
+     (request) => handler(ParameterReader.GetBodyParameter<TIn>(request.Body.ValueUnsafe()).ValueUnsafe())
+     .ContinueWith(task => new WmResponse(request.Id, task.Result.StatusCode, task.Result.Value.Match<string>(
+                                                Left: msg => msg,
+                                                Right: value => JsonSerializer.Serialize(value, options ?? Serialization.DefaultCamelCase))),
+       TaskScheduler.Current);
 }

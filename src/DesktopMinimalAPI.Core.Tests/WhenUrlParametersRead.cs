@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 using static DesktopMinimalAPI.Core.ParameterReading.ParameterReader;
 
 namespace DesktopMinimalAPI.Core.Tests;
-public class WhenParametersRead
+public class WhenUrlParametersRead
 {
     [Fact]
     public void ShouldReaturnRequestedParameterFromUrl()

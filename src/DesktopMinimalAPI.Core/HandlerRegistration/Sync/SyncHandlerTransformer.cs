@@ -23,7 +23,7 @@ internal static class SyncHandlerTransformer
             Fail: ex => new WmResponse(request.Id, HttpStatusCode.BadRequest, CreateResponseBody(ex)));
 
 
-    public static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<FromUrl<TIn>, HandlerResult<TOut>> handler) =>
+    internal static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<FromUrl<TIn>, HandlerResult<TOut>> handler) =>
         (request) =>
                 ParameterReader.GetUrlParameter<TIn>(request.Route.Parameters)
                 .Match(
@@ -32,7 +32,7 @@ internal static class SyncHandlerTransformer
                 .Apply(result => new WmResponse(request.Id, result.StatusCode, CreateResponseBody(result)));
             
 
-    public static Func<WmRequest, WmResponse> Transform<TIn1, TIn2, TOut>(Func<FromUrl<TIn1>, FromUrl<TIn2>, HandlerResult<TOut>> handler, JsonSerializerOptions? options = null) =>
+    internal static Func<WmRequest, WmResponse> Transform<TIn1, TIn2, TOut>(Func<FromUrl<TIn1>, FromUrl<TIn2>, HandlerResult<TOut>> handler, JsonSerializerOptions? options = null) =>
         (request) =>
         {
             try
