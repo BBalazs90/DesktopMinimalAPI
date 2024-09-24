@@ -37,23 +37,4 @@ internal static class AsyncHandlerTransformer
                                                            None: () => CreateInvalidBodyParameterResponse(request.Id)))
                     .IfNone(CreateInvalidBodyParameterResponse(request.Id));
 
-    private static WmResponse CreateResponseFromHandlerResult<T>(Task<HandlerResult<T>> handlerTask, RequestId requestId) =>
-        handlerTask.IsCompletedSuccessfully
-        ? new WmResponse(requestId,
-                    handlerTask.Result.StatusCode,
-                    CreateResponseBody(handlerTask.Result))
-        : new WmResponse(requestId,
-                HttpStatusCode.BadRequest,
-                CreateResponseBody(handlerTask.Exception?.InnerException
-                    ?? new InvalidOperationException("Unknown exception in handler")));
-
-    private static Task<WmResponse> CreateInvalidUrlParameterResponse(RequestId requestId) =>
-        Task.FromResult(new WmResponse(requestId,
-                                        HttpStatusCode.BadRequest,
-                                        CreateResponseBody("The provided URL did not contained proper parameter.")));
-
-    private static Task<WmResponse> CreateInvalidBodyParameterResponse(RequestId requestId) =>
-        Task.FromResult(new WmResponse(requestId,
-                                        HttpStatusCode.BadRequest,
-                                        CreateResponseBody("The provided body did not contained proper parameter.")));
 }
