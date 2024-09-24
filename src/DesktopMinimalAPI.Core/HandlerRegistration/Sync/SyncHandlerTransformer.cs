@@ -7,10 +7,10 @@ using LanguageExt.UnsafeValueAccess;
 using System;
 using System.Net;
 using System.Text.Json;
-using static LanguageExt.Prelude;
-using static DesktopMinimalAPI.Core.Support.SerializationHelper;
-using static DesktopMinimalAPI.Core.HandlerRegistration.HandlerResult;
 using LanguageExt;
+using static LanguageExt.Prelude;
+using static DesktopMinimalAPI.Core.HandlerRegistration.HandlerResult;
+using static DesktopMinimalAPI.Core.HandlerRegistration.ResponseHelper;
 
 namespace DesktopMinimalAPI.Core.HandlerRegistration.Sync;
 internal static class SyncHandlerTransformer
@@ -46,12 +46,4 @@ internal static class SyncHandlerTransformer
                 return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
             }
         };
-
-    private static string CreateResponseBody<T>(HandlerResult<T> result) =>
-       result.Value.Match<string>(
-                      Left: msg => SerializeCamelCase(new {Message = (string)msg}),
-                      Right: value => SerializeCamelCase(value));
-
-    private static string CreateResponseBody(Exception ex) =>
-        SerializeCamelCase(new {Message = ex.Message});
 }
