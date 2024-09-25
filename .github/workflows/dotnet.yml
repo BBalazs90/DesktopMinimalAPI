@@ -45,7 +45,8 @@ jobs:
     # Install the .NET SDK indicated in the global.json file
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
-
+    
+    # Create the NuGet package in the folder from the environment variable NuGetDirectory
     - run: dotnet pack ${{ env.CoreProject }} --configuration Release --output ${{ env.NuGetDirectory }}
     - run: dotnet pack ${{ env.WpfProject }} --configuration Release  --output ${{ env.NuGetDirectory }}
 
