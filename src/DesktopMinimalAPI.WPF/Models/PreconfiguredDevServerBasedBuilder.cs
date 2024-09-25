@@ -1,5 +1,5 @@
 ﻿using DesktopMinimalAPI.Core.Abstractions;
-using DesktopMinimalAPI.Core.Features.HandlerRegistration;
+using DesktopMinimalAPI.Core.HandlerRegistration;
 using DesktopMinimalAPI.Core.Models;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;

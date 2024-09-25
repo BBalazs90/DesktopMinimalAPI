@@ -1,20 +1,21 @@
-﻿using DesktopMinimalAPI.Core;
-using DesktopMinimalAPI.Core.Abstractions;
+﻿using DesktopMinimalAPI.Core.Abstractions;
 using DesktopMinimalAPI.Core.Configuration;
-using DesktopMinimalAPI.Core.Models;
-using DesktopMinimalAPI.Core.Models.Methods;
-using DesktopMinimalAPI.Core.RequestHandling;
+using DesktopMinimalAPI.Core.RequestHandling.Models;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
+using DesktopMinimalAPI.Core.RequestHandling.Models.Methods;
 using DesktopMinimalAPI.Models;
+using LanguageExt;
 using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using static DesktopMinimalAPI.Core.RequestHandling.RequestDecoder;
 
 [assembly: InternalsVisibleTo("DesktopMinimalAPI.Core.Tests")]
 [assembly: InternalsVisibleTo("DesktopMinimalAPI.WPF")]
@@ -23,10 +24,7 @@ namespace DesktopMinimalAPI;
 internal sealed class WebMessageBrokerCore : IWebMessageBroker
 {
     public readonly ICoreWebView2 CoreWebView;
-#pragma warning disable S4487 // Unread "private" fields should be removed
-    // Will be used soon.
     private readonly SynchronizationContext? _context;
-#pragma warning restore S4487 // Unread "private" fields should be removed
 
     internal WebMessageBrokerCore(ICoreWebView2 coreWebView)
     {
@@ -35,50 +33,51 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
         _context = SynchronizationContext.Current;
     }
 
-    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> GetMessageHandlers { get; init; }
-    internal required ImmutableDictionary<IRoute, Func<TransformedWmRequest, Task<WmResponse>>> PostMessageHandlers { get; init; }
+    internal required ImmutableDictionary<Route, Func<WmRequest, Task<WmResponse>>> GetMessageHandlers { get; init; }
+    internal required ImmutableDictionary<Route, Func<WmRequest, Task<WmResponse>>> PostMessageHandlers { get; init; }
 
-    internal void OnWebMessageReceived(object? sender, EventArgs e) => StartRequestProcessingPipeline(e);
+    internal void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e) => StartRequestProcessingPipeline(e);
 
-    private void StartRequestProcessingPipeline(EventArgs e)
+    private void StartRequestProcessingPipeline(CoreWebView2WebMessageReceivedEventArgs e)
     {
-        var (request, invalidRequestReponse) = RequestReaderPipeline.TryGetRequest(e);
-        if (invalidRequestReponse is not null)
-        {
-            PostResponse(invalidRequestReponse);
-            return;
-        }
-
-        Debug.Assert(request is not null, "If the invalidRequestReponse is not null, the previous method must return a non-null request");
-        var route = RoutePipeline.GetRoot(request.Path);
-        var transformedRequest = RequestTransformerPipeline.Transform(request);
-        var handler = request.Method switch
-        {
-            var method when method == Method.Get => GetMessageHandlers.GetValueOrDefault(route),
-            var method when method == Method.Post => PostMessageHandlers.GetValueOrDefault(route),
-            _ => null
-        };
-
-        if (handler is null)
-        {
-            var notFoundResponse = new WmResponse(request.RequestId, HttpStatusCode.NotFound, JsonSerializer.Serialize($"The requested endpoint '{request.Path}' was not registered", Serialization.DefaultCamelCase));
-            CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(notFoundResponse, Serialization.DefaultCamelCase));
-            return;
-        }
-
-        _ = Task.Run(async () => await handler
-            .Invoke(transformedRequest)
-            .ContinueWith(resp => 
-                _context?.Post(
-                    _ => CoreWebView?.PostWebMessageAsString(JsonSerializer.Serialize(resp.Result, Serialization.DefaultCamelCase)), null),
-                    TaskScheduler.Current)
-            .ConfigureAwait(false));
-
-
-
-        void PostResponse(WmResponse response) =>
-            CoreWebView.PostWebMessageAsString(JsonSerializer.Serialize(response, Serialization.DefaultCamelCase));
+       var request = DecodeRequest(e);
+        _ = Task.Run(() =>
+            request
+            .Bind(FindHandler)
+            .Map(async handler => await handler().ConfigureAwait(false))
+            .Match(
+                Right: response => response.ContinueWith(r => PostResponse(r.Result, _context), TaskScheduler.Default),
+                Left: ex => ex switch
+                {
+                    RequestException reqEx when reqEx.InnerException is KeyNotFoundException => HandleException(new WmResponse(reqEx.RequestId, HttpStatusCode.NotFound, string.Join(' ', reqEx.Message, reqEx.InnerException?.Message))),
+                    RequestException reqEx => HandleException(new WmResponse(reqEx.RequestId, HttpStatusCode.BadRequest, string.Join(' ', reqEx.Message, reqEx.InnerException?.Message))),
+                    _ => HandleException(new WmResponse(Guid.Empty, HttpStatusCode.InternalServerError, ex.Message))
+                }
+              ));
 
     }
+
+    void PostResponse(WmResponse response, SynchronizationContext context) =>
+        context.Post((state) =>
+            CoreWebView.PostWebMessageAsString(JsonSerializer.Serialize(state, Serialization.DefaultCamelCase)), response);
+
+    Task HandleException(WmResponse response)
+    {
+        PostResponse(response, _context);
+        return Task.CompletedTask;
+    }
+
+    [SuppressMessage("Usage", "CA2201: Exception is not specific enough",
+    Justification = "That exception is not used, only needed because pattern matching in C# requires a 'catch all' case.")]
+    private Either<RequestException, Func<Task<WmResponse>>> FindHandler(WmRequest request) => request.Method switch
+    {
+        Get => GetMessageHandlers.TryGetValue(request.Route, out var handler)
+            ? new Func<Task<WmResponse>>(() => handler(request))
+            : RequestException.From(request.Id, new KeyNotFoundException($"No handler was registered for the route '{request.Route.Path}'")),
+        Post => PostMessageHandlers.TryGetValue(request.Route, out var handler)
+           ? new Func<Task<WmResponse>>(() => handler(request))
+           : RequestException.From(request.Id, new KeyNotFoundException($"No handler was registered for the route '{request.Route.Path}'")),
+        _ => RequestException.From(request.Id, new Exception("This cannot happen"))
+    };
 }
 
