@@ -19,6 +19,7 @@ env:
   DOTNET_NOLOGO: true
   NuGetDirectory: ${{ github.workspace}}/nuget
   CoreProject: ${{ github.workspace}}/src/DesktopMinimalAPI.Core/DesktopMinimalAPI.Core.csproj
+  CoreTestProject: ${{ github.workspace}}/src/DesktopMinimalAPI.Core.Tests/DesktopMinimalAPI.Core.Tests.csproj
   WpfProject: ${{ github.workspace}}/src/DesktopMinimalAPI.WPF/DesktopMinimalAPI.WPF.csproj
 
 defaults:
@@ -70,7 +71,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
     - name: Run tests
-      run: dotnet test --configuration Release
+      run: dotnet test ${{ env.CoreTestProject }} --configuration Release
 
   deploy:
     # Publish only when creating a GitHub Release
