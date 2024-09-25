@@ -17,7 +17,6 @@ on:
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
   DOTNET_NOLOGO: true
-  VERSION: ${GITHUB_REF/refs\/tags\/v/}
   NuGetDirectory: ${{ github.workspace}}/nuget
   CoreProject: ${{ github.workspace}}/src/DesktopMinimalAPI.Core/DesktopMinimalAPI.Core.csproj
   CoreTestProject: ${{ github.workspace}}/src/DesktopMinimalAPI.Core.Tests/DesktopMinimalAPI.Core.Tests.csproj
@@ -47,10 +46,17 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
 
-    # Create the NuGet packages in the folder from the environment variable NuGetDirectory
-    - run: echo ${{ env.VERSION }}
-    - run: dotnet pack ${{ env.CoreProject }} --configuration Release /p:Version=${{ env.VERSION }} --output ${{ env.NuGetDirectory }}
-    - run: dotnet pack ${{ env.WpfProject }} --configuration Release /p:Version=${{ env.VERSION }} --output ${{ env.NuGetDirectory }}
+    - name: Branch name
+      id: branch_name
+      run: echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
+
+    - name: Build packages
+      env:
+        SOURCE_TAG: ${{ steps.branch_name.outputs.SOURCE_TAG }}
+      run: |
+        echo $SOURCE_TAG
+        dotnet pack ${{ env.CoreProject }} --configuration Release /p:Version=$SOURCE_TAG --output ${{ env.NuGetDirectory }}
+        dotnet pack ${{ env.WpfProject }} --configuration Release /p:Version=$SOURCE_TAG --output ${{ env.NuGetDirectory }}
 
     # Publish the NuGet package as an artifact, so they can be used in the following jobs
     - uses: actions/upload-artifact@v3
