@@ -13,7 +13,7 @@ public sealed class CoreWebView2Wrapper : ICoreWebView2
         _coreWebView2.WebMessageReceived += (sender, e) => WebMessageReceived?.Invoke(sender, e);
     }
 
-    public event EventHandler<EventArgs>? WebMessageReceived;
+    public event EventHandler<CoreWebView2WebMessageReceivedEventArgs>? WebMessageReceived;
 
     public void PostWebMessageAsString(string webMessageAsString) 
         => _coreWebView2.PostWebMessageAsString(webMessageAsString);

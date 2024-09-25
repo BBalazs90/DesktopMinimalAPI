@@ -1,32 +1,39 @@
-﻿using DesktopMinimalAPI.Core.Configuration;
-using DesktopMinimalAPI.Core.Models;
-using DesktopMinimalAPI.Core.ParameterReading;
+﻿using DesktopMinimalAPI.Core.HandlerRegistration.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
-using LanguageExt.UnsafeValueAccess;
 using System;
-using System.Net;
-using System.Text.Json;
 using System.Threading.Tasks;
+using static DesktopMinimalAPI.Core.HandlerRegistration.ResponseHelper;
+using static DesktopMinimalAPI.Core.ParameterReading.ParameterReader;
 
 namespace DesktopMinimalAPI.Core.HandlerRegistration.Async;
 internal static class AsyncHandlerTransformer
 {
-    internal static Func<WmRequest, Task<WmResponse>> Transform<T>(Func<Task<T>> handler, JsonSerializerOptions? options = null) =>
-      (request) => handler().ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
-        TaskScheduler.Current);
+    internal static Func<WmRequest, Task<WmResponse>> Transform<T>(Func<Task<HandlerResult<T>>> handler) =>
+      (request) => handler().ContinueWith(task => CreateResponseFromHandlerResult(task, request.Id),
+          TaskScheduler.Current);
 
-    internal static Func<WmRequest, Task<WmResponse>> Transform<TP, TIn, TOut>(Func<TP,Task<TOut>> handler, JsonSerializerOptions? options = null)
-        where TP : ParameterSource<TIn> =>
-     (request) => handler(ParameterReader.GetParameter<TP, TIn>(request.Route.Parameters, request.Body.ValueUnsafe(), 0).ValueUnsafe()).ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
-       TaskScheduler.Current);
+    internal static Func<WmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<FromUrl<TIn>, Task<HandlerResult<TOut>>> handler) =>
+    (request) => GetUrlParameter<TIn>(request.Route.Parameters)
+                .Match(Some: parameter => handler(parameter)
+                                        .ContinueWith(task => CreateResponseFromHandlerResult(task, request.Id),
+                                   TaskScheduler.Current),
+                       None: () => CreateInvalidUrlParameterResponse(request.Id));
 
-    internal static Func<WmRequest, Task<WmResponse>> Transform<TP1, TP2, TIn1, TIn2, TOut>(Func<TP1, TP2, Task<TOut>> handler, JsonSerializerOptions? options = null)
-       where TP1 : ParameterSource<TIn1>
-       where TP2 : ParameterSource<TIn2> =>
-    (request) => handler(ParameterReader.GetParameter<TP1, TIn1>(request.Route.Parameters, request.Body.ValueUnsafe(), 0).ValueUnsafe(),
-        ParameterReader.GetParameter<TP2, TIn2>(request.Route.Parameters, request.Body.ValueUnsafe(), 1).ValueUnsafe())
-    .ContinueWith(t => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(t.Result, options ?? Serialization.DefaultCamelCase)),
-      TaskScheduler.Current);
+    internal static Func<WmRequest, Task<WmResponse>> Transform<TIn1, TIn2, TOut>(Func<FromUrl<TIn1>, FromUrl<TIn2>, Task<HandlerResult<TOut>>> handler) =>
+    (request) => GetUrlParameters<TIn1, TIn2>(request.Route.Parameters)
+                .Match(Some: parameters => handler(parameters.Item1, parameters.Item2)
+                                        .ContinueWith(task => CreateResponseFromHandlerResult(task, request.Id),
+                                   TaskScheduler.Current),
+                       None: () => CreateInvalidUrlParameterResponse(request.Id));
+
+    internal static Func<WmRequest, Task<WmResponse>> Transform<TIn, TOut>(Func<FromBody<TIn>, Task<HandlerResult<TOut>>> handler) =>
+     (request) => request.Body
+                    .Bind<Task<WmResponse>>(body => GetBodyParameter<TIn>(body)
+                                                    .Match(Some: parameter => handler(parameter)
+                                                                            .ContinueWith(task => CreateResponseFromHandlerResult(task, request.Id),
+                                                                          TaskScheduler.Current),
+                                                           None: () => CreateInvalidBodyParameterResponse(request.Id)))
+                    .IfNone(CreateInvalidBodyParameterResponse(request.Id));
 
 }

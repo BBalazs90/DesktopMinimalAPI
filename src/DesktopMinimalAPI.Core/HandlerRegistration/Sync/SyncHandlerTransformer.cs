@@ -1,55 +1,47 @@
-﻿using DesktopMinimalAPI.Core.Configuration;
-using DesktopMinimalAPI.Core.Models;
-using DesktopMinimalAPI.Core.ParameterReading;
-using DesktopMinimalAPI.Core.RequestHandling.Models;
+﻿using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
-using LanguageExt.UnsafeValueAccess;
 using System;
 using System.Net;
-using System.Text.Json;
+using LanguageExt;
 using static LanguageExt.Prelude;
+using static DesktopMinimalAPI.Core.HandlerRegistration.Models.HandlerResult;
+using static DesktopMinimalAPI.Core.HandlerRegistration.ResponseHelper;
+using static DesktopMinimalAPI.Core.ParameterReading.ParameterReader;
+using DesktopMinimalAPI.Core.HandlerRegistration.Models;
 
 namespace DesktopMinimalAPI.Core.HandlerRegistration.Sync;
 internal static class SyncHandlerTransformer
 {
-    internal static Func<WmRequest, WmResponse> Transform<T>(Func<T> handler, JsonSerializerOptions? options = null) =>
+   
+    internal static Func<WmRequest, WmResponse> Transform<T>(Func<HandlerResult<T>> handler) =>
       (request) => Try(handler)
         .Match(
-            Succ: result => new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase)),
-            Fail: ex => new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase)));
+            Succ: result => new WmResponse(request.Id, result.StatusCode, CreateResponseBody(result)),
+            Fail: ex => new WmResponse(request.Id, HttpStatusCode.BadRequest, CreateResponseBody(ex)));
 
 
-    public static Func<WmRequest, WmResponse> Transform<TP, TIn, TOut>(Func<TP, TOut> handler, JsonSerializerOptions? options = null)
-       where TP : ParameterSource<TIn> =>
+    internal static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<FromUrl<TIn>, HandlerResult<TOut>> handler) =>
         (request) =>
-        {
-            try
-            {
-                var p1 = ParameterReader.GetParameter<TP, TIn>(request.Route.Parameters, request.Body.ValueUnsafe(), 0);
-                var result = handler(p1.ValueUnsafe());
-                return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
-            }
-            catch (Exception ex)
-            {
-                return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
-            }
-        };
+                GetUrlParameter<TIn>(request.Route.Parameters)
+                .Match(
+                       Some: p => Try(() => handler(p)).IfFail(ex => BadRequest<TOut>(ex.Message)),
+                       None: BadRequest<TOut>("Could not find the required URL parameter."))
+                .Apply(result => new WmResponse(request.Id, result.StatusCode, CreateResponseBody(result)));
+            
 
-    public static Func<WmRequest, WmResponse> Transform<TP1, TP2, TIn1, TIn2, TOut>(Func<TP1, TP2, TOut> handler, JsonSerializerOptions? options = null)
-              where TP1 : ParameterSource<TIn1>
-              where TP2 : ParameterSource<TIn2> =>
-               (request) =>
-               {
-                   try
-                   {
-                       var p1 = ParameterReader.GetParameter<TP1, TIn1>(request.Route.Parameters, request.Body.ValueUnsafe(), 0);
-                       var p2 = ParameterReader.GetParameter<TP2, TIn2>(request.Route.Parameters, request.Body.ValueUnsafe(), 1);
-                       var result = handler(p1.ValueUnsafe(), p2.ValueUnsafe());
-                       return new WmResponse(request.Id, HttpStatusCode.OK, JsonSerializer.Serialize(result, options ?? Serialization.DefaultCamelCase));
-                   }
-                   catch (Exception ex)
-                   {
-                       return new WmResponse(request.Id, HttpStatusCode.InternalServerError, JsonSerializer.Serialize(ex.Message, options ?? Serialization.DefaultCamelCase));
-                   }
-               };
+    internal static Func<WmRequest, WmResponse> Transform<TIn1, TIn2, TOut>(Func<FromUrl<TIn1>, FromUrl<TIn2>, HandlerResult<TOut>> handler) =>
+        (request) =>
+                GetUrlParameters<TIn1, TIn2>(request.Route.Parameters)
+                .Match(
+                       Some: parameters => Try(() => handler(parameters.Item1, parameters.Item2)).IfFail(ex => BadRequest<TOut>(ex.Message)),
+                       None: BadRequest<TOut>("Could not find the required URL parameter."))
+                .Apply(result => new WmResponse(request.Id, result.StatusCode, CreateResponseBody(result)));
+
+    internal static Func<WmRequest, WmResponse> Transform<TIn, TOut>(Func<FromBody<TIn>, HandlerResult<TOut>> handler) =>
+        (request) => request.Body
+            .Bind(body => GetBodyParameter<TIn>(body))
+            .Match(
+                    Some: p => Try(() => handler(p)).IfFail(ex => BadRequest<TOut>(ex.Message)),
+                    None: BadRequest<TOut>("Could not find the required body parameter."))
+            .Apply(result => new WmResponse(request.Id, result.StatusCode, CreateResponseBody(result)));
 }
