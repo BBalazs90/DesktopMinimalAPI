@@ -1,8 +1,7 @@
-﻿using DesktopMinimalAPI.Core.Models;
+﻿using DesktopMinimalAPI.Core.HandlerRegistration.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 using static DesktopMinimalAPI.Core.HandlerRegistration.ResponseHelper;
 using static DesktopMinimalAPI.Core.ParameterReading.ParameterReader;

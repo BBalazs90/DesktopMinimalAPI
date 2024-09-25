@@ -1,11 +1,10 @@
-﻿using DesktopMinimalAPI.Core.Models;
+﻿using DesktopMinimalAPI.Core.HandlerRegistration.Models;
 using DesktopMinimalAPI.Core.RequestHandling.Models;
 using DesktopMinimalAPI.Models;
 using LanguageExt.UnsafeValueAccess;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-
 using static DesktopMinimalAPI.Core.HandlerRegistration.Async.AsyncHandlerTransformer;
 
 namespace DesktopMinimalAPI.Core.HandlerRegistration.Async;
@@ -32,13 +31,6 @@ public static class BuilderExtensions
 
     public static HandlerBuilderBase MapPost<TOut>(this HandlerBuilderBase builder, string route, Func<Task<HandlerResult<TOut>>> handler) =>
         ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapPost)(Transform(handler));
-
-
-    public static HandlerBuilderBase MapPost<TIn, TOut>(this HandlerBuilderBase builder, string route, Func<FromUrl<TIn>, Task<HandlerResult<TOut>>> handler) =>
-      ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapPost)(Transform(handler));
-
-    public static HandlerBuilderBase MapPost<TIn1, TIn2, TOut>(this HandlerBuilderBase builder, string route, Func<FromUrl<TIn1>, FromUrl<TIn2>, Task<HandlerResult<TOut>>> handler)  =>
-       ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapPost)(Transform(handler));
 
     public static HandlerBuilderBase MapPost<TIn, TOut>(this HandlerBuilderBase builder, string route, Func<FromBody<TIn>, Task<HandlerResult<TOut>>> handler) =>
      ApplyRoute<Func<WmRequest, Task<WmResponse>>>(route, builder.MapPost)(Transform(handler));

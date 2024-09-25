@@ -5,15 +5,17 @@ using DesktopMinimalAPI.Core.RequestHandling.Models.Exceptions;
 using DesktopMinimalAPI.Core.RequestHandling.Models.Methods;
 using DesktopMinimalAPI.Models;
 using LanguageExt;
+using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using static DesktopMinimalAPI.Core.RequestHandling.RequestReaderPipeline;
+using static DesktopMinimalAPI.Core.RequestHandling.RequestDecoder;
 
 [assembly: InternalsVisibleTo("DesktopMinimalAPI.Core.Tests")]
 [assembly: InternalsVisibleTo("DesktopMinimalAPI.WPF")]
@@ -34,9 +36,9 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
     internal required ImmutableDictionary<Route, Func<WmRequest, Task<WmResponse>>> GetMessageHandlers { get; init; }
     internal required ImmutableDictionary<Route, Func<WmRequest, Task<WmResponse>>> PostMessageHandlers { get; init; }
 
-    internal void OnWebMessageReceived(object? sender, EventArgs e) => StartRequestProcessingPipeline(e);
+    internal void OnWebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e) => StartRequestProcessingPipeline(e);
 
-    private void StartRequestProcessingPipeline(EventArgs e)
+    private void StartRequestProcessingPipeline(CoreWebView2WebMessageReceivedEventArgs e)
     {
        var request = DecodeRequest(e);
         _ = Task.Run(() =>
@@ -65,7 +67,8 @@ internal sealed class WebMessageBrokerCore : IWebMessageBroker
         return Task.CompletedTask;
     }
 
-
+    [SuppressMessage("Usage", "CA2201: Exception is not specific enough",
+    Justification = "That exception is not used, only needed because pattern matching in C# requires a 'catch all' case.")]
     private Either<RequestException, Func<Task<WmResponse>>> FindHandler(WmRequest request) => request.Method switch
     {
         Get => GetMessageHandlers.TryGetValue(request.Route, out var handler)
