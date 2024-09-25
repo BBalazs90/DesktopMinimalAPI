@@ -7,6 +7,12 @@
 		<WarningsAsErrors>true</WarningsAsErrors>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<Authors>Balazs Balogh</Authors>
+		<Description>ASP.NET MinimalAPI like library for WebView2 based desktop application development.</Description>
+		<PackageTags>library, WebView2, hybrid</PackageTags>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="LanguageExt.Core" Version="4.4.9" />
 		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2592.51" />
