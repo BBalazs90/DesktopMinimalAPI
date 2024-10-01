@@ -9,8 +9,8 @@
 		<Authors>Balazs Balogh</Authors>
 		<Description>WPF specific version for DestopManimialAPI.</Description>
 		<PackageTags>library, WebView2, hybrid</PackageTags>
-		<PackageVersion>1.0.2-beta</PackageVersion>
-		<Version>1.0.2-beta</Version>
+		<PackageVersion>1.0.1-beta</PackageVersion>
+		<Version>1.0.1-beta</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
