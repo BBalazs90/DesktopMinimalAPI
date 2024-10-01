@@ -11,7 +11,8 @@
 		<Authors>Balazs Balogh</Authors>
 		<Description>ASP.NET MinimalAPI like library for WebView2 based desktop application development.</Description>
 		<PackageTags>library, WebView2, hybrid</PackageTags>
-		<PackageVersion>0.9.2-beta</PackageVersion>
+		<PackageVersion>1.0.2-beta</PackageVersion>
+		<Version>1.0.2-beta</Version>
 	</PropertyGroup>
 
 	<ItemGroup>

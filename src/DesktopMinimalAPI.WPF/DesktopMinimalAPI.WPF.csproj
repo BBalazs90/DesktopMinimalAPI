@@ -5,13 +5,12 @@
 		<EnableWindowsTargeting>true</EnableWindowsTargeting>
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
-	</PropertyGroup>
-
-	<PropertyGroup>
+	
 		<Authors>Balazs Balogh</Authors>
 		<Description>WPF specific version for DestopManimialAPI.</Description>
 		<PackageTags>library, WebView2, hybrid</PackageTags>
-		<PackageVersion>0.9.2-beta</PackageVersion>
+		<PackageVersion>1.0.2-beta</PackageVersion>
+		<Version>1.0.2-beta</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
