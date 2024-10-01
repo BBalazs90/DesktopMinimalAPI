@@ -2,6 +2,7 @@
 using DesktopMinimalAPI.Core.HandlerRegistration;
 using DesktopMinimalAPI.Core.Models;
 using Microsoft.Web.WebView2.Wpf;
+using System;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
 
@@ -14,6 +15,7 @@ public sealed class Builder : HandlerBuilderBase
     internal Builder(WebView2 webView2)
     {
         WebView2 = webView2;
+        WebView2.CoreWebView2InitializationCompleted += (_, e) => { if (e.IsSuccess) { Console.WriteLine("WebView2 initialized"); } };
     }
 
     public override async Task<IWebMessageBroker> BuildAsync()
